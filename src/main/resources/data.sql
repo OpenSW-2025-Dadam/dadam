@@ -1,5 +1,6 @@
 SET FOREIGN_KEY_CHECKS = 0;
 -- 1. 기존 데이터 초기화 (테스트 반복을 위해)
+DELETE FROM comment;
 DELETE FROM answer;
 DELETE FROM question;
 DELETE FROM app_user;
@@ -12,6 +13,7 @@ DELETE FROM quiz;
 ALTER TABLE app_user AUTO_INCREMENT = 1;
 ALTER TABLE question AUTO_INCREMENT = 1;
 ALTER TABLE answer AUTO_INCREMENT = 1;
+ALTER TABLE comment AUTO_INCREMENT = 1;
 ALTER TABLE balance_game AUTO_INCREMENT = 1;
 ALTER TABLE balance_game_selection AUTO_INCREMENT = 1;
 ALTER TABLE quiz AUTO_INCREMENT = 1;
@@ -30,22 +32,30 @@ INSERT INTO question (content, category, created_at) VALUES
 ('서로에게 가장 고마웠던 순간 하나씩 이야기해 볼까요?', 'MEMORY', NOW());
 
 -- 4. 테스트 답변 삽입 (User ID 1, 2, 3은 위 INSERT로 자동 할당됨)
--- Question ID 1에 대한 답변
-INSERT INTO answer (question_id, user_id, content, created_at) VALUES
-(1, 2, '작년에 갔던 해외여행! 공항에서 길 잃어버릴 뻔한 게 짜릿했어요.', NOW()),
-(1, 3, '그냥 집 근처 공원에서 텐트 치고 놀았던 주말이 제일 편하고 즐거웠어요.', NOW() + INTERVAL 1 MINUTE);
+-- Question ID 1에 대한 답변 (ID 1, 2 할당)
+INSERT INTO answer (id, question_id, user_id, content, created_at) VALUES
+(1, 1, 2, '작년에 갔던 해외여행! 공항에서 길 잃어버릴 뻔한 게 짜릿했어요.', NOW()),
+(2, 1, 3, '그냥 집 근처 공원에서 텐트 치고 놀았던 주말이 제일 편하고 즐거웠어요.', NOW() + INTERVAL 1 MINUTE);
 
--- Question ID 2에 대한 답변
-INSERT INTO answer (question_id, user_id, content, created_at) VALUES
-(2, 1, '요즘 저는 주말에 새로운 레시피로 요리하는 것에 푹 빠져 있어요.', NOW()),
-(2, 2, '저는 게임이요! 특히 다같이 할 수 있는 보드 게임을 다시 모으고 있어요!!', NOW() + INTERVAL 1 MINUTE),
-(2, 3, '저는 그림 그리기요. 가족들 몰래 방에서 열심히 그리고 있어요.', NOW() + INTERVAL 2 MINUTE);
+-- Question ID 2에 대한 답변 (ID 3, 4, 5 할당)
+INSERT INTO answer (id, question_id, user_id, content, created_at) VALUES
+(3, 2, 1, '요즘 저는 주말에 새로운 레시피로 요리하는 것에 푹 빠져 있어요.', NOW()),
+(4, 2, 2, '저는 게임이요! 특히 다같이 할 수 있는 보드 게임을 다시 모으고 있어요!!', NOW() + INTERVAL 1 MINUTE),
+(5, 2, 3, '저는 그림 그리기요. 가족들 몰래 방에서 열심히 그리고 있어요.', NOW() + INTERVAL 2 MINUTE);
 
--- Question ID 3에 대한 답변
-INSERT INTO answer (question_id, user_id, content, created_at) VALUES
-(3, 1, '힘들 때 말없이 어깨를 토닥여준 순간이 가장 고마웠어요.', NOW()),
-(3, 2, '생일날 깜짝 이벤트 해줬을 때요! 평생 잊지 못할 거예요.', NOW() + INTERVAL 1 MINUTE),
-(3, 3, '제가 잘못했을 때 혼내지 않고 차분히 이야기해 줬던 그날이 기억에 남아요.', NOW() + INTERVAL 2 MINUTE);
+-- Question ID 3에 대한 답변 (ID 6, 7, 8 할당)
+INSERT INTO answer (id, question_id, user_id, content, created_at) VALUES
+(6, 3, 1, '힘들 때 말없이 어깨를 토닥여준 순간이 가장 고마웠어요.', NOW()),
+(7, 3, 2, '생일날 깜짝 이벤트 해줬을 때요! 평생 잊지 못할 거예요.', NOW() + INTERVAL 1 MINUTE),
+(8, 3, 3, '제가 잘못했을 때 혼내지 않고 차분히 이야기해 줬던 그날이 기억에 남아요.', NOW() + INTERVAL 2 MINUTE);
+
+INSERT INTO comment (answer_id, user_id, content, created_at) VALUES
+-- Answer ID 3 (User 1의 답변: 요리)에 댓글
+(3, 2, '레시피 기대할게요! 나중에 같이 만들어 먹어요~', NOW() + INTERVAL 3 MINUTE), -- 자녀1 (ID 2) 댓글
+(3, 3, '요리 말고 다른 취미는 없으신가요?', NOW() + INTERVAL 4 MINUTE),   -- 자녀2 (ID 3) 댓글
+-- Answer ID 4 (User 2의 답변: 게임)에 댓글
+(4, 1, '보드 게임 재밌죠. 혹시 클루 좋아하세요?', NOW() + INTERVAL 5 MINUTE),
+(1, 1, '그때 얼마나 걱정했는지 아니?', NOW() + INTERVAL 5 MINUTE);-- 나 (ID 1) 댓글
 
 INSERT INTO balance_game (question_content, option_a, option_b, created_at) VALUES
 ('Q1: 모든 구성원 참여 완료 - 밸런스 게임 Q1', 'A: 민트초코', 'B: 반민트초코', NOW()),

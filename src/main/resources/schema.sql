@@ -1,4 +1,5 @@
 -- ⭐ 1. 모든 테이블 삭제 (외래 키 역순)
+DROP TABLE IF EXISTS comment;
 DROP TABLE IF EXISTS quiz_selection;
 DROP TABLE IF EXISTS balance_game_selection;
 DROP TABLE IF EXISTS answer;
@@ -55,6 +56,19 @@ CREATE TABLE `answer` (
   CONSTRAINT `FK_answer_question` FOREIGN KEY (`question_id`) REFERENCES `question` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE `comment` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `content` varchar(50) NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `answer_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_comment_answer` (`answer_id`),
+  KEY `FK_comment_user` (`user_id`),
+  -- answer 테이블과 app_user 테이블을 참조합니다.
+  CONSTRAINT `FK_comment_answer` FOREIGN KEY (`answer_id`) REFERENCES `answer` (`id`),
+  CONSTRAINT `FK_comment_user` FOREIGN KEY (`user_id`) REFERENCES `app_user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `balance_game_selection` (
   `id` bigint NOT NULL AUTO_INCREMENT,
@@ -93,3 +107,4 @@ CREATE TABLE `quiz_selection` (
   CONSTRAINT `FK_selection_quiz` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`id`),
   CONSTRAINT `FK_selection_user_quiz` FOREIGN KEY (`user_id`) REFERENCES `app_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
