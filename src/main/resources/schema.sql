@@ -1,8 +1,10 @@
 -- ⭐ 1. 모든 테이블 삭제 (외래 키 역순)
+DROP TABLE IF EXISTS quiz_selection;
 DROP TABLE IF EXISTS balance_game_selection;
 DROP TABLE IF EXISTS answer;
 DROP TABLE IF EXISTS balance_game;
 DROP TABLE IF EXISTS question;
+DROP TABLE IF EXISTS quiz;
 DROP TABLE IF EXISTS app_user;
 
 -- =======================================================
@@ -64,4 +66,30 @@ CREATE TABLE `balance_game_selection` (
   UNIQUE KEY `UK_game_user` (`balance_game_id`,`user_id`),
   CONSTRAINT `FK_selection_game` FOREIGN KEY (`balance_game_id`) REFERENCES `balance_game` (`id`),
   CONSTRAINT `FK_selection_user` FOREIGN KEY (`user_id`) REFERENCES `app_user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `quiz` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `question_content` varchar(500) NOT NULL,
+  `option_a` varchar(255) NOT NULL,
+  `option_b` varchar(255) NOT NULL,
+  `option_c` varchar(255) NOT NULL,
+  `option_d` varchar(255) NOT NULL,
+  `correct_answer` varchar(1) NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE `quiz_selection` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `selected_option` varchar(1) NOT NULL,
+  `is_correct` tinyint(1) NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `quiz_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_quiz_user` (`quiz_id`,`user_id`),
+  CONSTRAINT `FK_selection_quiz` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`id`),
+  CONSTRAINT `FK_selection_user_quiz` FOREIGN KEY (`user_id`) REFERENCES `app_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
