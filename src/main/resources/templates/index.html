@@ -83,22 +83,28 @@
                         <div class="quiz-subtitle">의 뜻은 무엇일까요?</div>
                     </div>
                     <div class="quiz-options">
-                        <button class="quiz-option" data-option="폭탄">
+                        <button class="quiz-option" type="button" data-option="폭탄">
                             <span class="option-text">폭탄</span>
                             <div class="option-profiles"></div>
                         </button>
-                        <button class="quiz-option" data-option="갈색 옷">
+                        <button class="quiz-option" type="button" data-option="갈색 옷">
                             <span class="option-text">갈색 옷</span>
                             <div class="option-profiles"></div>
                         </button>
-                        <button class="quiz-option" data-option="못생김">
+                        <button class="quiz-option" type="button" data-option="못생김" data-correct="true">
                             <span class="option-text">못생김</span>
                             <div class="option-profiles"></div>
                         </button>
-                        <button class="quiz-option" data-option="밤맛 차">
+                        <button class="quiz-option" type="button" data-option="밤맛 차">
                             <span class="option-text">밤맛 차</span>
                             <div class="option-profiles"></div>
                         </button>
+                    </div>
+                    <div class="quiz-actions">
+                        <button class="btn-primary quiz-check-btn" id="checkQuizBtn" type="button">
+                            정답 확인
+                        </button>
+                        <div class="quiz-result" id="quizResult"></div>
                     </div>
                 </div>
             </section>
@@ -109,12 +115,12 @@
                     <h2 class="card-title">밸런스 게임</h2>
                 </div>
                 <div class="balance-game">
-                    <button class="balance-option" data-option="동아리 모임가기">
+                    <button class="balance-option" type="button" data-option="동아리 모임가기">
                         <span class="option-text">동아리 모임가기</span>
                         <div class="option-profiles"></div>
                     </button>
                     <div class="balance-vs">VS</div>
-                    <button class="balance-option" data-option="100분 뽀모도로">
+                    <button class="balance-option" type="button" data-option="100분 뽀모도로">
                         <span class="option-text">100분 뽀모도로</span>
                         <div class="option-profiles"></div>
                     </button>
@@ -135,8 +141,8 @@
                     <div class="question-feedback">
                         <span>질문이 마음에 들었나요?</span>
                         <div class="feedback-buttons">
-                            <button class="feedback-btn like">👍 좋아요</button>
-                            <button class="feedback-btn dislike">👎 별로</button>
+                            <button class="feedback-btn like" type="button">👍 좋아요</button>
+                            <button class="feedback-btn dislike" type="button">👎 별로</button>
                         </div>
                     </div>
                     <textarea
@@ -147,7 +153,7 @@
                     ></textarea>
                     <div class="answer-footer">
                         <span class="char-count" id="charCount">0 / 100</span>
-                        <button class="btn-primary" id="saveBtn">답변하기</button>
+                        <button class="btn-primary" id="saveBtn" type="button">답변하기</button>
                     </div>
                 </div>
             </article>
@@ -191,7 +197,7 @@
                 </div>
                 <div class="calendar-container">
                     <div class="calendar-actions">
-                        <button class="btn-secondary" id="createEventBtn">약속 만들기 📝</button>
+                        <button class="btn-secondary" id="createEventBtn" type="button">약속 만들기 📝</button>
                     </div>
                     <div class="calendar-grid" id="calendar">
                         <div class="calendar-day-header">일</div>

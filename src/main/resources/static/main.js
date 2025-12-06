@@ -1,14 +1,59 @@
-// 유저 이름 표시
-const userName1 = "나희" // 백엔드에서 내려준 값
+// main.js
+
+// ==============================
+// 0. 유저 정보 & 공통 상수
+// ==============================
+
+// 유저 이름 표시 (실제로는 백엔드에서 내려줄 값)
+const userName1 = "나희"
 const userName2 = "수진"
 const userName3 = "민규"
+
 document.getElementById("familyName").textContent = `화목한 ${userName1}네`
 document.getElementById("user1").textContent = userName1
 document.getElementById("user2").textContent = userName2
 document.getElementById("user3").textContent = userName3
 
+// 현재 사용자 (예시로 user1 사용, 나중에 로그인 정보로 변경)
+const currentUserId = "user1"
+const currentUserName = userName1
+
 // 프로필 이미지 localStorage 키
 const PROFILE_STORAGE_KEY = "dadam_profiles_v1"
+
+// 게임 선택 저장 키
+const QUIZ_STORAGE_KEY = "dadam_quiz_selections_v1"
+const BALANCE_STORAGE_KEY = "dadam_balance_selections_v1"
+
+// 알림 저장 키
+const NOTIFICATION_STORAGE_KEY = "dadam_notifications_v1"
+
+// 사용자 정보 매핑
+const userMap = {
+  user1: { name: userName1, emoji: "😍" },
+  user2: { name: userName2, emoji: "🙂" },
+  user3: { name: userName3, emoji: "😴" },
+}
+
+// 알림 타입
+const NOTIFICATION_TYPES = {
+  CALENDAR: "calendar",
+  ANSWER: "answer",
+  QUIZ: "quiz",
+  BALANCE: "balance",
+}
+
+// 알림 아이콘 매핑
+const notificationIcons = {
+  [NOTIFICATION_TYPES.CALENDAR]: "📅",
+  [NOTIFICATION_TYPES.ANSWER]: "💬",
+  [NOTIFICATION_TYPES.QUIZ]: "📝",
+  [NOTIFICATION_TYPES.BALANCE]: "⚖️",
+}
+
+// ==============================
+// 1. 프로필 이미지 관련
+// ==============================
 
 // 프로필 이미지 저장
 function saveProfileImage(userId, imageData) {
@@ -69,13 +114,11 @@ function setupProfileUpload() {
       const file = e.target.files[0]
       if (!file) return
 
-      // 이미지 파일인지 확인
       if (!file.type.startsWith("image/")) {
         alert("이미지 파일만 업로드 가능합니다.")
         return
       }
 
-      // 파일 크기 제한 (5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert("파일 크기는 5MB 이하여야 합니다.")
         return
@@ -85,10 +128,7 @@ function setupProfileUpload() {
         const userId = input.dataset.user
         const imageData = await fileToBase64(file)
 
-        // 이미지 표시
         displayProfileImage(userId, imageData)
-
-        // localStorage에 저장
         saveProfileImage(userId, imageData)
       } catch (error) {
         console.error("이미지 업로드 실패:", error)
@@ -110,23 +150,20 @@ function loadSavedProfiles() {
   })
 }
 
-// 프로필 이미지 초기화
-setupProfileUpload()
-loadSavedProfiles()
+// ==============================
+// 2. 게임(퀴즈/밸런스) 관련
+// ==============================
 
-// 게임 선택 저장 키
-const QUIZ_STORAGE_KEY = "dadam_quiz_selections_v1"
-const BALANCE_STORAGE_KEY = "dadam_balance_selections_v1"
-
-// 사용자 정보 매핑
-const userMap = {
-  user1: { name: userName1, emoji: "😍" },
-  user2: { name: userName2, emoji: "🙂" },
-  user3: { name: userName3, emoji: "😴" },
+// 선택 불러오기
+function loadSelections(storageKey) {
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
 }
-
-// 현재 사용자 (예시로 user1 사용, 나중에 로그인 정보로 변경)
-const currentUserId = "user1"
 
 // 선택 저장 (하나만 선택 가능)
 function saveSelection(storageKey, option, userId) {
@@ -159,24 +196,13 @@ function saveSelection(storageKey, option, userId) {
   }
 }
 
-// 선택 불러오기
-function loadSelections(storageKey) {
-  try {
-    const raw = localStorage.getItem(storageKey)
-    if (!raw) return {}
-    return JSON.parse(raw)
-  } catch {
-    return {}
-  }
-}
-
 // 프로필 이미지 가져오기
 function getProfileImage(userId) {
   const profiles = loadProfileImages()
   return profiles[userId] || null
 }
 
-// 선택지에 프로필 사진 표시
+// 선택지에 프로필 사진/이모지 표시
 function renderOptionProfiles(optionEl, userIds) {
   const profilesContainer = optionEl.querySelector(".option-profiles")
   if (!profilesContainer) return
@@ -208,9 +234,14 @@ function renderOptionProfiles(optionEl, userIds) {
   })
 }
 
-// 신조어 퀴즈 선택 처리
+// 🔹 신조어 퀴즈 선택 + 정답 확인 로직
 function setupQuizSelection() {
   const quizOptions = document.querySelectorAll(".quiz-option")
+  const checkQuizBtn = document.getElementById("checkQuizBtn")
+  const quizResultEl = document.getElementById("quizResult")
+
+  let quizLocked = false
+  let currentSelection = null
 
   function renderAllOptions() {
     const selections = loadSelections(QUIZ_STORAGE_KEY)
@@ -218,31 +249,81 @@ function setupQuizSelection() {
       const optionText = option.dataset.option
       const userIds = selections[optionText] || []
       renderOptionProfiles(option, userIds)
+
+      // 선택 UI 표시
+      option.classList.toggle("selected", optionText === currentSelection)
     })
+  }
+
+  function highlightCorrectness(isCorrect) {
+    quizOptions.forEach((opt) => {
+      opt.classList.remove("quiz-correct", "quiz-incorrect")
+      if (opt.dataset.correct === "true") {
+        opt.classList.add("quiz-correct")
+      } else if (opt.dataset.option === currentSelection) {
+        opt.classList.add("quiz-incorrect")
+      }
+    })
+
+    if (!quizResultEl) return
+    if (isCorrect) {
+      quizResultEl.textContent = "정답입니다! 🎉"
+      quizResultEl.classList.remove("incorrect")
+      quizResultEl.classList.add("correct")
+    } else {
+      quizResultEl.textContent = "아쉽지만 오답이에요. 😢"
+      quizResultEl.classList.remove("correct")
+      quizResultEl.classList.add("incorrect")
+    }
   }
 
   // 초기 렌더링
   renderAllOptions()
 
-  // 클릭 이벤트
+  // 보기 클릭: 선택만 변경 (정답 확정은 아직 아님)
   quizOptions.forEach((option) => {
     option.addEventListener("click", () => {
+      if (quizLocked) return
+
       const optionText = option.dataset.option
+      currentSelection = optionText
+
+      // 선택 저장 (아바타 표시용)
       saveSelection(QUIZ_STORAGE_KEY, optionText, currentUserId)
-      // 모든 선택지 다시 렌더링
       renderAllOptions()
-      // 알림 생성
-      const userInfo = userMap[currentUserId]
-      saveNotification(
-        NOTIFICATION_TYPES.QUIZ,
-        `${userInfo.name}님이 신조어 퀴즈에서 "${optionText}"을(를) 선택했습니다.`,
-        { option: optionText, user: userInfo.name }
-      )
     })
   })
+
+  // 정답 확인 버튼
+  if (checkQuizBtn) {
+    checkQuizBtn.addEventListener("click", () => {
+      if (quizLocked) return
+
+      if (!currentSelection) {
+        alert("먼저 보기 하나를 선택해 주세요.")
+        return
+      }
+
+      const selectedOption = Array.from(quizOptions).find(
+          (opt) => opt.dataset.option === currentSelection
+      )
+      const isCorrect = selectedOption && selectedOption.dataset.correct === "true"
+
+      highlightCorrectness(isCorrect)
+      quizLocked = true
+
+      // 알림 생성 (정답 확인 시점에 한 번)
+      const userInfo = userMap[currentUserId]
+      saveNotification(
+          NOTIFICATION_TYPES.QUIZ,
+          `${userInfo.name}님이 신조어 퀴즈에서 "${currentSelection}"을(를) 선택했습니다. (${isCorrect ? "정답" : "오답"})`,
+          { option: currentSelection, correct: isCorrect }
+      )
+    })
+  }
 }
 
-// 밸런스 게임 선택 처리
+// 밸런스 게임 선택 처리 (선택은 언제든 변경 가능)
 function setupBalanceSelection() {
   const balanceOptions = document.querySelectorAll(".balance-option")
 
@@ -263,25 +344,22 @@ function setupBalanceSelection() {
     option.addEventListener("click", () => {
       const optionText = option.dataset.option
       saveSelection(BALANCE_STORAGE_KEY, optionText, currentUserId)
-      // 모든 선택지 다시 렌더링
       renderAllOptions()
-      // 알림 생성
+
       const userInfo = userMap[currentUserId]
       saveNotification(
-        NOTIFICATION_TYPES.BALANCE,
-        `${userInfo.name}님이 밸런스 게임에서 "${optionText}"을(를) 선택했습니다.`,
-        { option: optionText, user: userInfo.name }
+          NOTIFICATION_TYPES.BALANCE,
+          `${userInfo.name}님이 밸런스 게임에서 "${optionText}"을(를) 선택했습니다.`,
+          { option: optionText, user: userInfo.name }
       )
     })
   })
 }
 
-// 게임 선택 초기화
-setupQuizSelection()
-setupBalanceSelection()
+// ==============================
+// 3. 알림 시스템
+// ==============================
 
-// 알림 시스템
-const NOTIFICATION_STORAGE_KEY = "dadam_notifications_v1"
 const notificationBtn = document.getElementById("notificationBtn")
 const notificationBadge = document.getElementById("notificationBadge")
 const notificationModal = document.getElementById("notificationModal")
@@ -289,20 +367,15 @@ const notificationModalCloseBtn = document.getElementById("notificationModalClos
 const notificationList = document.getElementById("notificationList")
 const notificationEmpty = document.getElementById("notificationEmpty")
 
-// 알림 타입
-const NOTIFICATION_TYPES = {
-  CALENDAR: "calendar",
-  ANSWER: "answer",
-  QUIZ: "quiz",
-  BALANCE: "balance",
-}
-
-// 알림 아이콘 매핑
-const notificationIcons = {
-  [NOTIFICATION_TYPES.CALENDAR]: "📅",
-  [NOTIFICATION_TYPES.ANSWER]: "💬",
-  [NOTIFICATION_TYPES.QUIZ]: "📝",
-  [NOTIFICATION_TYPES.BALANCE]: "⚖️",
+// 알림 불러오기
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIFICATION_STORAGE_KEY)
+    if (!raw) return []
+    return JSON.parse(raw)
+  } catch {
+    return []
+  }
 }
 
 // 알림 저장
@@ -318,7 +391,6 @@ function saveNotification(type, message, data = {}) {
       timestamp: new Date().toISOString(),
     }
     notifications.unshift(notification)
-    // 최대 50개까지만 저장
     if (notifications.length > 50) {
       notifications.splice(50)
     }
@@ -328,17 +400,6 @@ function saveNotification(type, message, data = {}) {
   } catch (e) {
     console.error("알림 저장 실패:", e)
     return null
-  }
-}
-
-// 알림 불러오기
-function loadNotifications() {
-  try {
-    const raw = localStorage.getItem(NOTIFICATION_STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw)
-  } catch {
-    return []
   }
 }
 
@@ -371,6 +432,17 @@ function updateNotificationBadge() {
   }
 }
 
+// 알림 읽음 처리
+function markAsRead(id) {
+  const notifications = loadNotifications()
+  const notification = notifications.find((n) => n.id === id)
+  if (notification && !notification.read) {
+    notification.read = true
+    localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(notifications))
+    updateNotificationBadge()
+  }
+}
+
 // 알림 리스트 렌더링
 function renderNotifications() {
   const notifications = loadNotifications()
@@ -395,7 +467,6 @@ function renderNotifications() {
       </div>
     `
 
-    // 클릭 시 읽음 처리
     item.addEventListener("click", () => {
       markAsRead(notification.id)
       item.classList.add("read")
@@ -403,17 +474,6 @@ function renderNotifications() {
 
     notificationList.appendChild(item)
   })
-}
-
-// 알림 읽음 처리
-function markAsRead(id) {
-  const notifications = loadNotifications()
-  const notification = notifications.find((n) => n.id === id)
-  if (notification && !notification.read) {
-    notification.read = true
-    localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(notifications))
-    updateNotificationBadge()
-  }
 }
 
 // 알림 모달 열기/닫기
@@ -440,13 +500,12 @@ notificationModal.addEventListener("click", (e) => {
 // 초기 뱃지 업데이트
 updateNotificationBadge()
 
-// 캘린더 일정 하루 전 알림 체크
+// 캘린더 일정 하루 전 알림 체크 (샘플)
 function checkCalendarNotifications() {
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
-  // 예시 이벤트 데이터 (실제로는 캘린더에서 가져와야 함)
   const events = [
     { name: "수진이 생일", date: "2025-11-03" },
     { name: "나희 생일", date: "2025-11-06" },
@@ -457,53 +516,37 @@ function checkCalendarNotifications() {
 
   events.forEach((event) => {
     if (event.date === tomorrowStr) {
-      // 이미 알림이 있는지 확인
       const notifications = loadNotifications()
       const existing = notifications.find(
-        (n) => n.type === NOTIFICATION_TYPES.CALENDAR && n.data.eventName === event.name && n.data.eventDate === event.date
+          (n) =>
+              n.type === NOTIFICATION_TYPES.CALENDAR &&
+              n.data.eventName === event.name &&
+              n.data.eventDate === event.date
       )
 
       if (!existing) {
         saveNotification(
-          NOTIFICATION_TYPES.CALENDAR,
-          `내일 "${event.name}" 일정이 있습니다.`,
-          { eventName: event.name, eventDate: event.date }
+            NOTIFICATION_TYPES.CALENDAR,
+            `내일 "${event.name}" 일정이 있습니다.`,
+            { eventName: event.name, eventDate: event.date }
         )
       }
     }
   })
 }
 
-// 페이지 로드 시 알림 체크
 checkCalendarNotifications()
 
-// ESC 키로 알림 모달도 닫기
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    if (modalOverlay.classList.contains("is-open")) {
-      closeAnswerModal()
-    }
-    if (eventModal.classList.contains("is-open")) {
-      closeEventModal()
-    }
-    if (authModal.classList.contains("is-open")) {
-      closeAuthModal()
-    }
-    if (notificationModal.classList.contains("is-open")) {
-      closeNotificationModal()
-    }
-  }
-})
+// ==============================
+// 4. 오늘의 질문 답변 & 대댓글
+// ==============================
 
-// 글자수 표시
 const answerEl = document.getElementById("answer")
 const charCountEl = document.getElementById("charCount")
 const commentList = document.getElementById("commentList")
 const saveBtn = document.getElementById("saveBtn")
 
-// 답변/대댓글 localStorage 저장용 키
 const STORAGE_KEY = "dadam_answers_v1"
-
 let answers = []
 
 function loadAnswers() {
@@ -521,7 +564,7 @@ function saveAnswers() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(answers))
   } catch {
-    // 저장 실패 시는 그냥 무시 (용량 초과 등)
+    // ignore
   }
 }
 
@@ -568,7 +611,6 @@ function renderAnswers() {
 function initAnswers() {
   answers = loadAnswers()
 
-  // 첫 방문 시엔 예시 데이터 한 번만 넣기
   if (answers.length === 0) {
     answers = [
       {
@@ -593,16 +635,23 @@ function initAnswers() {
 }
 
 answerEl.addEventListener("input", () => {
-  charCountEl.textContent = answerEl.value.length + " / 100"
+  charCountEl.textContent = `${answerEl.value.length} / 100`
 })
 
 saveBtn.addEventListener("click", () => {
   const text = answerEl.value.trim()
   if (!text) return
 
+  // 🔹 한 사람당 오늘의 질문에 하나만 답변 가능
+  const alreadyAnswered = answers.some((a) => a.author === currentUserName)
+  if (alreadyAnswered) {
+    alert("이미 오늘의 질문에 답변을 남기셨어요.\n한 사람당 하나의 답변만 작성할 수 있어요.")
+    return
+  }
+
   const newAnswer = {
     id: Date.now(),
-    author: userName1,
+    author: currentUserName,
     content: text,
     timeLabel: "방금 전",
     replies: [],
@@ -612,18 +661,17 @@ saveBtn.addEventListener("click", () => {
   saveAnswers()
   renderAnswers()
 
-  // 알림 생성 (다른 사용자에게 알림)
   saveNotification(
-    NOTIFICATION_TYPES.ANSWER,
-    `${userName1}님이 질문에 답변했습니다.`,
-    { author: userName1, answerId: newAnswer.id }
+      NOTIFICATION_TYPES.ANSWER,
+      `${currentUserName}님이 질문에 답변했습니다.`,
+      { author: currentUserName, answerId: newAnswer.id }
   )
 
   answerEl.value = ""
   charCountEl.textContent = "0 / 100"
 })
 
-// 답변 상세 보기 모달
+// 답변 상세 보기 모달 + 대댓글
 const modalOverlay = document.getElementById("answerModal")
 const modalTitle = document.getElementById("modalTitle")
 const modalAnswerText = document.getElementById("modalAnswerText")
@@ -677,9 +725,6 @@ modalOverlay.addEventListener("click", (e) => {
   }
 })
 
-// ESC 키로 답변 모달 닫기 (아래에서 통합 처리)
-
-// 댓글 클릭 시 모달 열기 (이벤트 위임)
 commentList.addEventListener("click", (e) => {
   const card = e.target.closest(".comment-card")
   if (!card) return
@@ -691,14 +736,12 @@ commentList.addEventListener("click", (e) => {
   openAnswerModal(authorEl.textContent, textEl.textContent, card)
 })
 
-// 모달에서 대댓글 작성
 modalReplyBtn.addEventListener("click", () => {
   const text = modalReplyInput.value.trim()
   if (!text || !currentCommentCard || !currentAnswerId) return
 
-  const replyAuthor = userName1 // 대댓글 작성자를 userName1으로 설정
+  const replyAuthor = currentUserName
 
-  // 카드 안에 대댓글 추가
   const replyList = currentCommentCard.querySelector(".reply-list")
   if (replyList) {
     const replyItem = document.createElement("div")
@@ -710,7 +753,6 @@ modalReplyBtn.addEventListener("click", () => {
     replyList.appendChild(replyItem)
   }
 
-  // 모달 안 리스트에도 바로 반영
   const modalItem = document.createElement("div")
   modalItem.className = "modal-reply-item"
   modalItem.innerHTML = `
@@ -719,7 +761,6 @@ modalReplyBtn.addEventListener("click", () => {
   `
   modalReplies.appendChild(modalItem)
 
-  // 데이터도 localStorage에 반영
   const targetId = Number(currentAnswerId)
   const target = answers.find((a) => a.id === targetId)
   if (target) {
@@ -734,11 +775,13 @@ modalReplyBtn.addEventListener("click", () => {
   modalReplyInput.value = ""
 })
 
+// ==============================
+// 5. 캘린더 (11월)
+// ==============================
 
-// 2025년 11월 달력
 const calendarEl = document.getElementById("calendar")
 const year = 2025
-const month = 10
+const month = 10 // 0-based, 10 = 11월
 const firstDay = new Date(year, month, 1).getDay()
 const lastDate = new Date(year, month + 1, 0).getDate()
 
@@ -754,10 +797,10 @@ for (let d = 1; d <= lastDate; d++) {
 
 calendarEl.insertAdjacentHTML("beforeend", cells)
 
-// 페이지 로드 시 답변 초기화
-initAnswers()
+// ==============================
+// 6. 약속 만들기 모달
+// ==============================
 
-// 약속 만들기 모달
 const eventModal = document.getElementById("eventModal")
 const eventModalCloseBtn = document.getElementById("eventModalCloseBtn")
 const createEventBtn = document.getElementById("createEventBtn")
@@ -769,12 +812,13 @@ const iconOptions = document.querySelectorAll(".icon-option")
 function openEventModal() {
   eventModal.classList.add("is-open")
   eventModal.setAttribute("aria-hidden", "false")
-  // 오늘 날짜를 기본값으로 설정
   const today = new Date().toISOString().split("T")[0]
   document.getElementById("eventDate").value = today
-  // 첫 번째 아이콘 선택
-  iconOptions[0].classList.add("selected")
-  eventIconInput.value = iconOptions[0].dataset.icon
+  iconOptions.forEach((opt) => opt.classList.remove("selected"))
+  if (iconOptions[0]) {
+    iconOptions[0].classList.add("selected")
+    eventIconInput.value = iconOptions[0].dataset.icon
+  }
 }
 
 function closeEventModal() {
@@ -794,7 +838,6 @@ eventModal.addEventListener("click", (e) => {
   }
 })
 
-// 아이콘 선택
 iconOptions.forEach((option) => {
   option.addEventListener("click", () => {
     iconOptions.forEach((opt) => opt.classList.remove("selected"))
@@ -803,7 +846,6 @@ iconOptions.forEach((option) => {
   })
 })
 
-// 약속 만들기 폼 제출
 eventForm.addEventListener("submit", (e) => {
   e.preventDefault()
   const title = document.getElementById("eventTitle").value.trim()
@@ -812,14 +854,16 @@ eventForm.addEventListener("submit", (e) => {
 
   if (!title || !date) return
 
-  // 여기서는 콘솔에만 출력 (나중에 백엔드 연결 시 API 호출)
   console.log("새 약속:", { title, date, icon })
   alert(`약속 "${title}"이(가) 생성되었습니다!`)
 
   closeEventModal()
 })
 
-// 로그인/회원가입 모달
+// ==============================
+// 7. 로그인/회원가입 모달
+// ==============================
+
 const authModal = document.getElementById("authModal")
 const authModalCloseBtn = document.getElementById("authModalCloseBtn")
 const userBtn = document.getElementById("userBtn")
@@ -871,7 +915,6 @@ authModal.addEventListener("click", (e) => {
 switchToSignupBtn.addEventListener("click", () => showSignupForm())
 switchToLoginBtn.addEventListener("click", () => showLoginForm())
 
-// 로그인 폼 제출
 loginForm.addEventListener("submit", (e) => {
   e.preventDefault()
   const email = document.getElementById("loginEmail").value.trim()
@@ -879,14 +922,12 @@ loginForm.addEventListener("submit", (e) => {
 
   if (!email || !password) return
 
-  // 여기서는 콘솔에만 출력 (나중에 백엔드 연결 시 API 호출)
   console.log("로그인 시도:", { email })
   alert("로그인되었습니다!")
 
   closeAuthModal()
 })
 
-// 회원가입 폼 제출
 signupForm.addEventListener("submit", (e) => {
   e.preventDefault()
   const name = document.getElementById("signupName").value.trim()
@@ -906,15 +947,16 @@ signupForm.addEventListener("submit", (e) => {
     return
   }
 
-  // 여기서는 콘솔에만 출력 (나중에 백엔드 연결 시 API 호출)
   console.log("회원가입 시도:", { name, email })
   alert("회원가입이 완료되었습니다!")
 
-  // 회원가입 후 로그인 폼으로 전환
   showLoginForm()
 })
 
-// ESC 키로 모든 모달 닫기 (통합 처리)
+// ==============================
+// 8. ESC 키로 모달 닫기 (통합)
+// ==============================
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     if (modalOverlay.classList.contains("is-open")) {
@@ -926,5 +968,18 @@ document.addEventListener("keydown", (e) => {
     if (authModal.classList.contains("is-open")) {
       closeAuthModal()
     }
+    if (notificationModal.classList.contains("is-open")) {
+      closeNotificationModal()
+    }
   }
 })
+
+// ==============================
+// 9. 초기화 실행
+// ==============================
+
+setupProfileUpload()
+loadSavedProfiles()
+setupQuizSelection()
+setupBalanceSelection()
+initAnswers()
