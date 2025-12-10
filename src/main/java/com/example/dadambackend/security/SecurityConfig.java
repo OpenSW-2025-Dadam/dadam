@@ -1,20 +1,30 @@
 package com.example.dadambackend.security;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // @PreAuthorize 같은거 쓸 수 있게 (나중 대비)
+@EnableMethodSecurity
+@SecurityScheme(                            // 🔐 Swagger JWT 설정
+        name = "Authorization",             // Security 이름 (아래 @SecurityRequirement에서 사용)
+        type = SecuritySchemeType.HTTP,
+        scheme = "bearer",
+        bearerFormat = "JWT",
+        in = SecuritySchemeIn.HEADER
+)
 public class SecurityConfig {
 
     @Bean
@@ -26,44 +36,40 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // 🔒 지금은 CSRF, 폼 로그인, HTTP Basic 다 꺼두기 (API 서버 기준)
+                // CSRF / 폼 로그인 / HTTP Basic 비활성화 (API 서버 기준)
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
 
-                // 🔐 세션을 쓰지 않는 stateless 방식 (JWT 쓸 준비용)
+                // JWT 전제: 세션 stateless
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 🌐 CORS 기본 설정 사용 (필요하면 따로 config에서 CORS 설정한 거랑 연결)
+                // CORS 기본
                 .cors(Customizer.withDefaults())
 
-                // ✅ URL별 권한 설정
+                // URL 권한
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ Swagger / API 문서 경로 허용
+                        // Swagger 문서 전체 허용
                         .requestMatchers(
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/swagger-resources/**",
-                                "/webjars/**"
-                        ).permitAll()
-
-                        // (혹시 예전 springfox 쓰고 있다면 이런 것도 필요할 수 있어)
-                        .requestMatchers(
                                 "/swagger-ui.html",
-                                "/v2/api-docs",
+                                "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()
 
-                        // 🔓 그 외 모든 API도 일단 전부 허용 (임시)
+                        // 로그인/회원가입은 누구나
+                        .requestMatchers(
+                                "/api/v1/auth/**"
+                        ).permitAll()
+
+                        // 그 외는 일단 전부 허용 (지금은 컨트롤러에서 직접 토큰 파싱)
                         .anyRequest().permitAll()
                 );
 
-        // 나중에 JWT 필터 추가할 때 여기에
-        // http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        // 나중에 JWT 필터 붙일 때 여기서 addFilterBefore(...) 하면 됨
 
         return http.build();
     }

@@ -11,6 +11,38 @@
 const API_BASE = "/api/v1";
 
 /* -----------------------------------------------------
+   🔐 Auth API 헬퍼
+----------------------------------------------------- */
+
+async function authPost(path, payload) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        let msg = "요청에 실패했어요.";
+        try {
+            const err = await res.json();
+            msg = err.message || err.errorCode || msg;
+        } catch (_) {}
+
+        addNotification?.({
+            type: "error",
+            message: msg,
+        });
+
+        throw new Error(`Auth ${path} 실패: ${msg}`);
+    }
+
+    return res.json();
+}
+
+
+/* -----------------------------------------------------
    📌 공통 상수 & 로컬 저장 키
 ----------------------------------------------------- */
 
@@ -29,6 +61,25 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 
 /* -----------------------------------------------------
+   🔄 계정 교체 시 초기화해야 할 유저별 상태
+----------------------------------------------------- */
+function clearUserScopedStorage() {
+    const userScopedKeys = [
+        DADAM_KEYS.USER_PROFILE,
+        DADAM_KEYS.ANSWERS,
+        DADAM_KEYS.COMMENTS,
+        DADAM_KEYS.BALANCE_GAME,
+        DADAM_KEYS.QUIZ_STATE,
+        DADAM_KEYS.EVENTS,
+        // 필요하면 추가
+    ];
+
+    userScopedKeys.forEach((key) => {
+        localStorage.removeItem(key);
+    });
+}
+
+/* -----------------------------------------------------
    👤 아바타 라벨 헬퍼 (이름 → "수진", "엄마" 등)
 ----------------------------------------------------- */
 function getAvatarLabel(rawName) {
@@ -36,18 +87,15 @@ function getAvatarLabel(rawName) {
     const name = String(rawName).trim();
     if (!name) return "가족";
 
-    // 공백 기준으로 마지막 토큰 사용 (예: "홍 길동" -> "길동")
     const parts = name.split(/\s+/);
     const last = parts[parts.length - 1];
 
-    // 한글 이름 처리
     if (/^[가-힣]+$/.test(last)) {
-        if (last.length <= 2) return last;        // "엄마", "아빠", "수진"
-        if (last.length === 3) return last.slice(1); // "윤수진" -> "수진"
-        return last;                               // 4글자 이상은 그대로
+        if (last.length <= 2) return last;
+        if (last.length === 3) return last.slice(1);
+        return last;
     }
 
-    // 그 외 (영문 등)
     if (last.length <= 3) return last;
     return last.slice(0, 3);
 }
@@ -56,12 +104,7 @@ function getAvatarLabel(rawName) {
    👤 아바타 공통 데이터 & HTML 빌더
 ----------------------------------------------------- */
 
-/**
- * userId / userName / avatarUrl 를 바탕으로
- * 최종 표시할 name + avatarUrl 결정
- */
 function getAvatarData(userId, userName, explicitAvatarUrl) {
-    // 1) 명시적으로 avatarUrl이 넘어온 경우 우선 사용
     if (explicitAvatarUrl) {
         return {
             name: userName || "가족",
@@ -69,7 +112,6 @@ function getAvatarData(userId, userName, explicitAvatarUrl) {
         };
     }
 
-    // 2) 현재 로그인 유저와 매칭되는 경우
     if (typeof currentUser !== "undefined" && currentUser) {
         if (
             currentUser.id != null &&
@@ -83,7 +125,6 @@ function getAvatarData(userId, userName, explicitAvatarUrl) {
         }
     }
 
-    // 3) DADAM_FAMILY에 등록된 가족인 경우
     if (
         typeof DADAM_FAMILY !== "undefined" &&
         DADAM_FAMILY &&
@@ -97,18 +138,12 @@ function getAvatarData(userId, userName, explicitAvatarUrl) {
         };
     }
 
-    // 4) 그 외: 이름만 사용, 사진은 없음
     return {
         name: userName || "가족",
         avatarUrl: null,
     };
 }
 
-/**
- * 어떤 화면이든 쓸 수 있는 공통 아바타 HTML 생성기
- * - size: "sm" | "md" | "lg"
- * - variant: "default" | "soft" | "accent"
- */
 function buildAvatarHtml({
                              userId = null,
                              userName = "",
@@ -140,7 +175,6 @@ function buildAvatarHtml({
     `;
 }
 
-
 /* -----------------------------------------------------
    👤 기본 유저 정보 (처음 접속 시 자동 생성)
 ----------------------------------------------------- */
@@ -169,7 +203,6 @@ function loadUserProfile() {
 
 let currentUser = loadUserProfile();
 
-/* 현재 유저 정보를 저장 + 헤더에 반영 */
 function setCurrentUser(profile) {
     currentUser = {
         id: profile.id ?? currentUser.id ?? null,
@@ -190,7 +223,6 @@ function setCurrentUser(profile) {
     applyCurrentUserToHeader();
 }
 
-/* 전역 상태 currentUser 가 있다고 가정 */
 function applyCurrentUserToHeader() {
     const nameEl = document.getElementById("current-username");
     const avatarWrapper = document.getElementById("current-avatar");
@@ -205,13 +237,11 @@ function applyCurrentUserToHeader() {
         nameEl.textContent = name;
     }
 
-    // 공통 빌더 사용
     const html = buildAvatarHtml({
         userId: currentUser?.id ?? null,
         userName: name,
         avatarUrl,
         size: "sm",
-        // 헤더는 기본 동그라미이므로 variant는 필요 시 "accent" 등으로
     });
 
     avatarWrapper.innerHTML = html;
@@ -349,13 +379,12 @@ document.addEventListener("click", (e) => {
     if (!btn) return;
     const targetId = btn.dataset.closeModal;
     if (targetId === "modal-auth" && !isLoggedIn()) {
-        // 로그인 전에는 로그인 모달을 강제로 유지
         return;
     }
     closeModal(targetId);
 });
 
-/* 모달 바깥(배경) 클릭 시 닫기 – auth는 로그인 전이면 유지 */
+/* 모달 바깥 클릭 시 닫기 – auth는 로그인 전이면 유지 */
 document.addEventListener("click", (e) => {
     if (!e.target.classList.contains("modal-backdrop")) return;
     if (e.target.id === "modal-auth" && !isLoggedIn()) return;
@@ -381,7 +410,6 @@ $("#open-notifications-from-card")?.addEventListener("click", () => {
 ----------------------------------------------------- */
 
 $("#open-profile")?.addEventListener("click", () => {
-    // 로그인 안 돼 있으면 프로필 대신 로그인 강제
     if (!isLoggedIn()) {
         setAuthUiState(false);
         return;
@@ -426,13 +454,13 @@ window.dadamNotify = function (msg) {
 document.addEventListener("DOMContentLoaded", () => {
     applyCurrentUserToHeader();
 
-    // 초기 진입 시: 로그인 안 되어 있으면 화면 블러 + 로그인 모달
+    // 처음 진입 시: 로그인 안 돼 있으면 블러 + 로그인 모달
     setAuthUiState(isLoggedIn());
 
     const logoutBtn = document.getElementById("logout-btn");
     logoutBtn?.addEventListener("click", () => {
         setAuthToken(null);
-        // 기본 프로필로 되돌림
+        clearUserScopedStorage();              // 🔥 계정 데이터 싹 지우기
         setCurrentUser(loadUserProfile());
         closeModal("modal-profile");
         setAuthUiState(false);
@@ -441,20 +469,135 @@ document.addEventListener("DOMContentLoaded", () => {
             message: "로그아웃되었어요.",
         });
     });
+});
 
-    const familyCheckBtn = document.getElementById("family-code-check-btn");
-    familyCheckBtn?.addEventListener("click", () => {
-        const input = document.getElementById("family-code-input");
-        if (!input) return;
-        const code = input.value.trim();
-        if (!code) {
-            alert("가족 코드를 입력해 주세요.");
+/* -----------------------------------------------------
+   🔐 로그인 / 회원가입 폼 처리
+----------------------------------------------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+
+    const loginTabBtn = document.querySelector('[data-auth-tab="login"]');
+    const signupTabBtn = document.querySelector('[data-auth-tab="signup"]');
+    const loginPanel = document.querySelector('[data-auth-panel="login"]');
+    const signupPanel = document.querySelector('[data-auth-panel="signup"]');
+    const goSignupLink = document.getElementById("go-signup-link");
+    const goLoginLink = document.getElementById("go-login-link");
+
+    function showAuthTab(which) {
+        if (!loginTabBtn || !signupTabBtn || !loginPanel || !signupPanel) return;
+
+        if (which === "login") {
+            loginTabBtn.classList.add("is-active");
+            signupTabBtn.classList.remove("is-active");
+            loginPanel.classList.add("is-active");
+            signupPanel.classList.remove("is-active");
+        } else {
+            signupTabBtn.classList.add("is-active");
+            loginTabBtn.classList.remove("is-active");
+            signupPanel.classList.add("is-active");
+            loginPanel.classList.remove("is-active");
+        }
+    }
+
+    loginTabBtn?.addEventListener("click", () => showAuthTab("login"));
+    signupTabBtn?.addEventListener("click", () => showAuthTab("signup"));
+    goSignupLink?.addEventListener("click", () => showAuthTab("signup"));
+    goLoginLink?.addEventListener("click", () => showAuthTab("login"));
+
+    // 기본은 로그인 탭
+    showAuthTab("login");
+
+    // 🔹 로그인 폼 submit
+    loginForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        if (!email || !password) {
+            addNotification?.({
+                type: "error",
+                message: "이메일과 비밀번호를 입력해 주세요.",
+            });
             return;
         }
-        // 실제 검증 API는 나중에 붙이면 됨
-        addNotification({
-            type: "info",
-            message: `가족 코드 "${code}"를 확인했어요. (백엔드 연동 예정)`,
-        });
+
+        try {
+            const data = await authPost("/auth/login", { email, password });
+
+            // 🔥 계정 교체 시 이전 사용자 데이터 초기화
+            clearUserScopedStorage();
+
+            setAuthToken(data.token);
+            if (data.user) {
+                setCurrentUser(data.user);
+            }
+
+            setAuthUiState(true);
+            closeModal("modal-auth");
+
+            addNotification?.({
+                type: "info",
+                message: "로그인 되었어요.",
+            });
+
+            if (typeof fetchProfile === "function") {
+                fetchProfile();
+            }
+            if (typeof fetchAndRenderFamilyMembers === "function") {
+                fetchAndRenderFamilyMembers();
+            }
+        } catch (err) {
+            console.error("[LOGIN] failed:", err);
+        }
+    });
+
+    // 🔹 회원가입 폼 submit
+    signupForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("signup-name").value.trim();
+        const email = document.getElementById("signup-email").value.trim();
+        const password = document.getElementById("signup-password").value;
+
+        if (!name || !email || !password) {
+            addNotification?.({
+                type: "error",
+                message: "이름, 이메일, 비밀번호를 모두 입력해 주세요.",
+            });
+            return;
+        }
+
+        try {
+            const data = await authPost("/auth/signup", { name, email, password });
+
+            // 🔥 새 계정 시작이니까 기존 데이터 제거
+            clearUserScopedStorage();
+
+            setAuthToken(data.token);
+            if (data.user) {
+                setCurrentUser(data.user);
+            }
+
+            setAuthUiState(true);
+            closeModal("modal-auth");
+
+            addNotification?.({
+                type: "info",
+                message: "회원가입이 완료되었어요. 환영합니다!",
+            });
+
+            if (typeof fetchProfile === "function") {
+                fetchProfile();
+            }
+            if (typeof fetchAndRenderFamilyMembers === "function") {
+                fetchAndRenderFamilyMembers();
+            }
+        } catch (err) {
+            console.error("[SIGNUP] failed:", err);
+        }
     });
 });

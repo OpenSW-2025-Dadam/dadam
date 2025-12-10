@@ -7,8 +7,9 @@
 ===================================================== */
 
 /* ================= 공통 상수 ================= */
-const QUIZ_TODAY_API_URL = "/api/v1/quiz/today";
-const QUIZ_VOTE_API_URL  = "/api/v1/quiz/today/vote";
+// API_BASE 는 dadam.core.js 에서 정의되어 있다고 가정
+const QUIZ_TODAY_API_URL = `${API_BASE}/quiz/today`;
+const QUIZ_VOTE_API_URL  = `${API_BASE}/quiz/today/vote`;
 
 const quizContainer   = document.getElementById("slang-quiz");
 const quizQuestionEl  = document.getElementById("quiz-question");
@@ -19,6 +20,63 @@ const quizCheckBtn    = document.getElementById("quiz-submit-btn");
 let currentQuiz   = null;
 let selectedIndex = null;  // 내가 현재 화면에서 고른 보기 인덱스
 let revealed      = false; // 정답 확인 상태 여부
+
+/* -----------------------------------------------------
+   🔐 이 파일 전용 API 헬퍼 (JWT 헤더 직접 붙이기)
+----------------------------------------------------- */
+async function quizApiGet(url) {
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+
+    const res = await fetch(url, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+
+    if (res.status === 401) {
+        // 로그인 요구
+        if (typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
+        throw new Error("401 Unauthorized");
+    }
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`GET ${url} 실패: ${text}`);
+    }
+
+    return res.json();
+}
+
+async function quizApiPost(url, body) {
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+
+    const res = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body ?? {}),
+    });
+
+    if (res.status === 401) {
+        if (typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
+        throw new Error("401 Unauthorized");
+    }
+
+    if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`POST ${url} 실패: ${text}`);
+    }
+
+    return res.json();
+}
 
 /* ---------------- 아바타 라벨 헬퍼 ---------------- */
 function getQuizAvatarLabel(rawName) {
@@ -96,7 +154,6 @@ function renderQuiz() {
     }
 
     if (quizFeedbackEl) {
-        // 기본 상태에서는 비워두고, revealed 상태에서 다시 채움
         quizFeedbackEl.textContent = "";
     }
 
@@ -107,11 +164,10 @@ function renderQuiz() {
 function updateQuizVisuals() {
     if (!currentQuiz) return;
 
-    // 서버에서 내려준 내 선택 (이미 투표한 경우)
     const lockedIndex = currentQuiz.myChoiceIndex;
     const isLocked    = lockedIndex !== null && lockedIndex !== undefined;
 
-    // selectedIndex가 없다면 서버 값으로 채워 줌
+    // 서버가 이미 내가 고른 보기(myChoiceIndex)를 알고 있으면, selectedIndex 초기값으로 사용
     if (isLocked && selectedIndex === null) {
         selectedIndex = lockedIndex;
     }
@@ -139,6 +195,7 @@ function updateQuizVisuals() {
         if (percentSpan) percentSpan.textContent = percent + "%";
 
         if (avatarsBox) {
+            // 1) 서버에서 내려온 투표자들 아바타 렌더링
             avatarsBox.innerHTML = votesForChoice
                 .map((voter) => {
                     const rawName =
@@ -153,17 +210,34 @@ function updateQuizVisuals() {
             `;
                 })
                 .join("");
+
+            // 2) 아직 서버에 투표하지 않았고(revealed=false, isLocked=false),
+            //    현재 화면에서 내가 선택한 보기라면 → 내 아바타를 임시로 렌더링
+            if (!revealed && !isLocked && selectedIndex === idx) {
+                const meName =
+                    (typeof currentUser !== "undefined" &&
+                        currentUser &&
+                        currentUser.name) ||
+                    "나";
+                const meLabel = getQuizAvatarLabel(meName);
+
+                avatarsBox.innerHTML += `
+              <span class="avatar avatar-sm avatar-me">
+                <span class="avatar-initial">${meLabel}</span>
+              </span>
+            `;
+            }
         }
 
         if (optionBtn) {
             optionBtn.classList.remove("selected", "correct", "wrong");
 
-            // 현재 화면에서 사용자가 선택한 보기
+            // 화면에서 내가 현재 고른 보기
             if (selectedIndex === idx) {
                 optionBtn.classList.add("selected");
             }
 
-            // 정답 확인 이후에는 정답/오답 색깔 표시
+            // 정답 공개 후에는 정답/오답 색 표시
             if (revealed && currentQuiz.answerIndex !== -1) {
                 if (idx === currentQuiz.answerIndex) {
                     optionBtn.classList.add("correct");
@@ -172,15 +246,13 @@ function updateQuizVisuals() {
                 }
             }
 
-            // ❌ 이 줄 때문에 disabled가 되어 클릭 이벤트가 막혔었음
-            // optionBtn.disabled = revealed && isLocked;
-
-            // ✅ 항상 클릭 가능하게 둔다 (로직은 클릭 핸들러에서 제어)
+            // ✅ 항상 클릭 가능하게 두고,
+            //    "이미 참여" 여부는 클릭 핸들러에서 제어
             optionBtn.disabled = false;
         }
     });
 
-    // 정답 확인 버튼: 선택이 있을 때만 보이기
+    // 정답 확인 버튼: 선택이 있을 때만 보이고, 정답 공개 후엔 비활성화
     if (quizCheckBtn) {
         if (selectedIndex === null) {
             quizCheckBtn.style.display = "none";
@@ -220,11 +292,12 @@ function updateQuizFeedback() {
     }
 }
 
-/* ---------------- 서버에서 오늘 퀴즈 가져오기 (JWT 포함) ---------------- */
+/* ---------------- 서버에서 오늘 퀴즈 가져오기 ---------------- */
 async function fetchTodayQuiz() {
+    if (!quizContainer) return; // 해당 UI가 없는 페이지에서는 무시
+
     try {
-        // apiGet은 Authorization 헤더를 자동으로 붙여줌 (dadam.answers.js)
-        const raw = await apiGet(QUIZ_TODAY_API_URL);
+        const raw = await quizApiGet(QUIZ_TODAY_API_URL);
         console.log("[QUIZ] today response:", raw);
 
         const summary = normalizeQuizSummary(raw);
@@ -233,8 +306,6 @@ async function fetchTodayQuiz() {
         currentQuiz   = summary;
         selectedIndex = summary.myChoiceIndex ?? null;
 
-        // 이미 서버가 "오늘 이 유저가 고른 보기"를 알고 있으면 (myChoiceIndex != null),
-        // 새로고침/재방문 시 바로 정답 화면
         if (selectedIndex !== null &&
             selectedIndex !== undefined &&
             summary.answerIndex !== -1) {
@@ -243,10 +314,8 @@ async function fetchTodayQuiz() {
             revealed = false;
         }
 
-        // 기본 렌더링
         renderQuiz();
 
-        // 정답 상태라면 정답/풀이도 바로 채움
         if (revealed) {
             updateQuizFeedback();
             updateQuizVisuals();
@@ -260,6 +329,15 @@ async function fetchTodayQuiz() {
         }
     } catch (err) {
         console.error("[QUIZ] error:", err);
+        const msg = String(err.message || "");
+
+        if (msg.includes("401")) {
+            if (quizQuestionEl) {
+                quizQuestionEl.textContent = "로그인이 필요해요. 먼저 로그인해 주세요.";
+            }
+            return;
+        }
+
         if (quizQuestionEl) {
             quizQuestionEl.textContent = "퀴즈를 불러오지 못했어요.";
         }
@@ -269,20 +347,16 @@ async function fetchTodayQuiz() {
 /* ---------------- 서버에 투표 보내기 ---------------- */
 async function sendQuizVote(choiceIndex) {
     try {
-        const raw = await apiPost(QUIZ_VOTE_API_URL, { choiceIndex });
+        const raw = await quizApiPost(QUIZ_VOTE_API_URL, { choiceIndex });
         console.log("[QUIZ] vote response:", raw);
 
         const summary = normalizeQuizSummary(raw);
         if (!summary) throw new Error("Invalid quiz vote data");
 
         currentQuiz   = summary;
-        // 서버가 내려준 myChoiceIndex가 최종 투표 결과
         selectedIndex = summary.myChoiceIndex ?? choiceIndex;
+        revealed      = true;
 
-        // 투표된 이후에는 정답화면을 보여주기 위해 revealed = true
-        revealed = true;
-
-        // 투표 결과(퍼센트, 아바타 등) + 정답 표시 업데이트
         updateQuizFeedback();
         updateQuizVisuals();
 
@@ -301,7 +375,6 @@ async function sendQuizVote(choiceIndex) {
             alert("로그인이 필요해요. 먼저 로그인해 주세요.");
         } else if (msg.includes("이미") || msg.includes("ALREADY_PARTICIPATED")) {
             alert("이미 오늘 퀴즈에 참여하셨어요.");
-            // 서버 상태로 다시 동기화
             fetchTodayQuiz();
         } else {
             if (typeof addNotification === "function") {
@@ -318,18 +391,29 @@ async function sendQuizVote(choiceIndex) {
 function initQuiz() {
     if (!quizContainer) return;
 
-    // 처음엔 버튼 숨김
     if (quizCheckBtn) {
         quizCheckBtn.style.display = "none";
+    }
+
+    // 토큰이 없으면 굳이 요청 안 보내고 안내만
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+    if (!token) {
+        if (quizQuestionEl) {
+            quizQuestionEl.textContent = "로그인이 필요해요. 먼저 로그인해 주세요.";
+        }
+        return;
     }
 
     fetchTodayQuiz();
 }
 
 /* 보기 버튼 클릭 */
+/* 보기 버튼 클릭 */
 document.addEventListener("click", (e) => {
+    if (!quizContainer || !currentQuiz) return;
+
     const btn = e.target.closest(".quiz-option");
-    if (!btn || !quizContainer || !currentQuiz) return;
+    if (!btn) return;
 
     const idx = Number(btn.dataset.index);
     if (Number.isNaN(idx)) return;
@@ -338,37 +422,46 @@ document.addEventListener("click", (e) => {
         currentQuiz.myChoiceIndex !== null &&
         currentQuiz.myChoiceIndex !== undefined;
 
-    // ✅ 이미 오늘 퀴즈에 참여한 상태라면: 어떤 보기든 클릭 시 알림
+    // ✅ 이미 서버에 투표한 상태면 더 이상 변경 불가
     if (hasLocked) {
         alert("이미 오늘 퀴즈에 참여하셨어요.");
         return;
     }
 
-    // 아직 정답 공개 전일 때만 선택 가능
+    // ✅ 정답을 이미 확인한 상태(revealed=true)면 변경 불가
     if (revealed) return;
 
-    // 서버에 바로 투표하지 않고, 화면에서 선택만 변경
+    // ✅ 아직 정답 확인 전 → 화면에서 선택만 바꾼다 (서버 투표 X)
     selectedIndex = idx;
     updateQuizVisuals();
 });
 
+
+/* "정답 확인" 버튼 */
 /* "정답 확인" 버튼 */
 quizCheckBtn?.addEventListener("click", async () => {
     if (!currentQuiz || selectedIndex === null || revealed) return;
 
     // 아직 서버에 투표가 안 된 경우에만 투표 요청
-    if (currentQuiz.myChoiceIndex === null ||
-        currentQuiz.myChoiceIndex === undefined) {
+    if (
+        currentQuiz.myChoiceIndex === null ||
+        currentQuiz.myChoiceIndex === undefined
+    ) {
         await sendQuizVote(selectedIndex);
-        // sendQuizVote에서 currentQuiz, selectedIndex, revealed를 최신으로 갱신함
+        // sendQuizVote 안에서:
+        //  - currentQuiz 갱신
+        //  - selectedIndex = 서버 myChoiceIndex
+        //  - revealed = true
+        //  - 정답/퍼센트/아바타 다시 렌더링
         return;
     }
 
-    // 안전망 (실제로는 거의 들어올 일 없음)
+    // 안전망 (이미 서버가 myChoiceIndex 를 알고 있는 경우)
     revealed = true;
     updateQuizFeedback();
     updateQuizVisuals();
 });
+
 
 /* DOM 로드 시 초기화 */
 document.addEventListener("DOMContentLoaded", () => {

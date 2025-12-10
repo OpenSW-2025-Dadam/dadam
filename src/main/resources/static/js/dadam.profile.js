@@ -218,14 +218,24 @@ profileForm?.addEventListener("submit", (e) => {
     const formData = new FormData();
     formData.append("name", profileNameInput.value.trim());
     formData.append("familyRole", profileRoleInput.value);
-    formData.append(
-        "familyCode",
-        document.getElementById("family-code-input").value
-    );
+
+    // 🔹 가족 코드 입력값
+    const familyCodeInput = document.getElementById("family-code-input");
+    if (familyCodeInput) {
+        const rawCode = familyCodeInput.value.trim();
+
+        // ✅ 비어 있지 않을 때만 서버로 전송
+        if (rawCode !== "") {
+            formData.append("familyCode", rawCode);
+        }
+        // 비어 있으면 familyCode를 아예 보내지 않으므로
+        // 백엔드에서는 기존 familyCode를 그대로 유지하게 됨
+    }
 
     updateProfile(formData);
     closeModal("modal-profile");
 });
+
 
 /* -----------------------------------------------------
    초기 로딩 시 백엔드에서 프로필 받아오기

@@ -185,4 +185,8 @@ public class UserProfileService {
         if (dotIndex == -1) return null;
         return filename.substring(dotIndex + 1);
     }
+    public String generateOrGetFamilyCode(Long userId) {
+        return userService.generateOrGetFamilyCode(userId);
+    }
+
 }

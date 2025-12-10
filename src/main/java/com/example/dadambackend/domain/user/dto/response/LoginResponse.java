@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-@Schema(description = "로그인 응답")
+@Schema(description = "로그인/회원가입 응답")
 public class LoginResponse {
 
-    @Schema(description = "JWT 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @Schema(description = "JWT 토큰", example = "eyJhbGciOiJIUzUxMiJ9...")
     private String token;
 
-    @Schema(description = "로그인한 사용자 정보")
+    @Schema(description = "로그인된 사용자 정보")
     private UserProfileResponse user;
 }
