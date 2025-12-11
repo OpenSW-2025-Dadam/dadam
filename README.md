@@ -1,3 +1,8 @@
+<p align="center">
+  <img
+    src="https://capsule-render.vercel.app/api?type=blur&color=66BB6A&height=200&section=header&text=茶談&fontSize=70&fontColor=255416&animation=fadeIn&descAlign=50&descAlignY=70"
+  />
+</p>
 # **다담 (Dadam)**  
 ### *A Web Platform for Family Communication and Generational Bonding*  
 > **茶談(다담)**: 차를 마시며 나누는 이야기 → 가족이 함께 이야기하는 공간
