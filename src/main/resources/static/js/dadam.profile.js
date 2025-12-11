@@ -159,14 +159,12 @@ async function updateProfile(formData) {
         window.currentUser = { ...(window.currentUser || {}), ...data };
     }
 
-    const updatedCode = data?.familyCode || currentUser?.familyCode || "";
-
     if (profileFamilyCodeInput) {
-        profileFamilyCodeInput.value = updatedCode;
+        profileFamilyCodeInput.value = currentUser?.familyCode || "";
     }
     if (profileFamilyCodeDisplay) {
-        profileFamilyCodeDisplay.textContent = updatedCode
-            ? `내 코드: ${updatedCode}`
+        profileFamilyCodeDisplay.textContent = currentUser?.familyCode
+            ? `내 코드: ${currentUser.familyCode}`
             : "코드 없음";
     }
 

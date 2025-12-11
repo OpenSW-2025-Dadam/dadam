@@ -862,6 +862,8 @@ eventForm.addEventListener("submit", (e) => {
 
 // ==============================
 // 7. 로그인/회원가입 모달
+// 💡 [제거됨] 이전 섹션에 있던 더미 로그인/회원가입 폼 처리 로직(loginForm.addEventListener("submit", ...))은
+//    dadam.core.js로 옮겨져 실제 API 통신을 하므로, 이 파일에서는 해당 로직을 제거하고 변수 선언 및 UI 관련 함수만 남깁니다.
 // ==============================
 
 const authModal = document.getElementById("authModal")
@@ -915,43 +917,9 @@ authModal.addEventListener("click", (e) => {
 switchToSignupBtn.addEventListener("click", () => showSignupForm())
 switchToLoginBtn.addEventListener("click", () => showLoginForm())
 
-loginForm.addEventListener("submit", (e) => {
-  e.preventDefault()
-  const email = document.getElementById("loginEmail").value.trim()
-  const password = document.getElementById("loginPassword").value
+// 💡 [제거됨] loginForm.addEventListener("submit", ...) 로직 제거
 
-  if (!email || !password) return
-
-  console.log("로그인 시도:", { email })
-  alert("로그인되었습니다!")
-
-  closeAuthModal()
-})
-
-signupForm.addEventListener("submit", (e) => {
-  e.preventDefault()
-  const name = document.getElementById("signupName").value.trim()
-  const email = document.getElementById("signupEmail").value.trim()
-  const password = document.getElementById("signupPassword").value
-  const passwordConfirm = document.getElementById("signupPasswordConfirm").value
-
-  if (!name || !email || !password || !passwordConfirm) return
-
-  if (password !== passwordConfirm) {
-    alert("비밀번호가 일치하지 않습니다.")
-    return
-  }
-
-  if (password.length < 6) {
-    alert("비밀번호는 최소 6자 이상이어야 합니다.")
-    return
-  }
-
-  console.log("회원가입 시도:", { name, email })
-  alert("회원가입이 완료되었습니다!")
-
-  showLoginForm()
-})
+// 💡 [제거됨] signupForm.addEventListener("submit", ...) 로직 제거
 
 // ==============================
 // 8. ESC 키로 모달 닫기 (통합)

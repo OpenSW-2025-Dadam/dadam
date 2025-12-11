@@ -140,30 +140,12 @@ public class ScheduleService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if (!isSameFamily(schedule.getFamilyCode(), user.getFamilyCode())) {
+        if (!normalize(schedule.getFamilyCode()).equals(normalize(user.getFamilyCode()))) {
             throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS, "다른 가족의 일정에는 접근할 수 없습니다.");
         }
     }
 
-    private boolean isSameFamily(String left, String right) {
-        String normalizedLeft = normalize(left);
-        String normalizedRight = normalize(right);
-
-        if (normalizedLeft == null && normalizedRight == null) {
-            return true;
-        }
-
-        if (normalizedLeft == null || normalizedRight == null) {
-            return false;
-        }
-
-        return normalizedLeft.equals(normalizedRight);
-    }
-
     private String normalize(String code) {
-        if (code == null) return null;
-        String trimmed = code.trim();
-        if (trimmed.isEmpty()) return null;
-        return trimmed.toUpperCase();
+        return (code == null || code.isBlank()) ? "" : code.trim();
     }
 }

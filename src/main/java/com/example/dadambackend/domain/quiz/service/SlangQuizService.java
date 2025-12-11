@@ -48,7 +48,7 @@ public class SlangQuizService {
         // 투표 + 유저 정보를 fetch join으로 한 번에 조회
         List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz)
                 .stream()
-                .filter(vote -> isSameFamily(vote.getUser(), requester))
+                .filter(vote -> isSameFamily(vote.getUser(), requester.getFamilyCode()))
                 .toList();
 
         return SlangQuizTodayResponse.of(quiz, votes, currentUserId);
@@ -97,7 +97,7 @@ public class SlangQuizService {
         // 5) 최신 결과 반환 (user fetch join)
         List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz)
                 .stream()
-                .filter(v -> isSameFamily(v.getUser(), user))
+                .filter(v -> isSameFamily(v.getUser(), user.getFamilyCode()))
                 .toList();
         return SlangQuizTodayResponse.of(quiz, votes, userId);
     }
@@ -121,25 +121,11 @@ public class SlangQuizService {
                 });
     }
 
-    private boolean isSameFamily(User target, User requester) {
-        if (target.getId().equals(requester.getId())) {
-            return true;
-        }
-
-        String normalizedTarget = normalize(target.getFamilyCode());
-        String normalizedRequest = normalize(requester.getFamilyCode());
-
-        if (normalizedTarget == null || normalizedRequest == null) {
-            return false;
-        }
-
-        return normalizedTarget.equals(normalizedRequest);
+    private boolean isSameFamily(User target, String familyCode) {
+        return normalize(target.getFamilyCode()).equals(normalize(familyCode));
     }
 
     private String normalize(String code) {
-        if (code == null) return null;
-        String trimmed = code.trim();
-        if (trimmed.isEmpty()) return null;
-        return trimmed.toUpperCase();
+        return (code == null || code.isBlank()) ? "" : code.trim();
     }
 }

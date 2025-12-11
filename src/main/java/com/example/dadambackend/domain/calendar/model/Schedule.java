@@ -62,7 +62,7 @@ public class Schedule {
         schedule.memo = emptyToNull(request.getMemo());
         schedule.type = emptyToNull(request.getType());
         schedule.remind = request.getRemind() != null && request.getRemind();
-        schedule.familyCode = normalizeFamilyCode(familyCode);
+        schedule.familyCode = (familyCode == null || familyCode.isBlank()) ? "" : familyCode.trim();
         schedule.createdAt = LocalDateTime.now();
         return schedule;
     }

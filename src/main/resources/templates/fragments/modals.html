@@ -123,6 +123,48 @@
         </div>
     </div>
 
+    <!-- 🔐 로그인 / 회원가입 모달 -->
+    <div id="modal-auth" class="modal-backdrop">
+        <div class="modal">
+            <header class="modal-header">
+                <div>
+                    <p class="modal-eyebrow">우리 가족</p>
+                    <h2 class="modal-title">초대 코드</h2>
+                </div>
+                <button class="ghost-icon-btn" type="button" data-close-modal="modal-invite">
+                    <span class="fh-icon-close"></span>
+                </button>
+            </header>
+            <div class="modal-body">
+                <div class="field-group">
+                    <label class="field-label" for="invite-code-value">초대 코드</label>
+                    <div class="field-row">
+                        <input
+                                id="invite-code-value"
+                                class="input"
+                                type="text"
+                                readonly
+                                value=""
+                                placeholder="로그인 후 코드를 발급받아 주세요"
+                        />
+                        <button class="btn btn-primary" type="button" id="copy-invite-code">복사</button>
+                    </div>
+                    <p class="helper-text">가족에게 코드를 전달하면 동일한 가족 공간을 공유할 수 있어요.</p>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-row" style="justify-content: space-between; align-items: center;">
+                        <label class="field-label" style="margin: 0;">가족 구성원</label>
+                        <span class="helper-text" id="invite-family-count"></span>
+                    </div>
+                    <div class="family-grid" id="invite-family-list">
+                        <!-- JS에서 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 👤 가족 프로필 상세 모달 -->
     <div id="modal-family-profile" class="modal-backdrop">
         <div class="modal">
@@ -177,7 +219,7 @@
                         <input id="login-password" class="input" type="password" name="password" required />
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-ghost" type="button" id="login-cancel-btn" data-close-modal="modal-login" data-allow-close="true">취소</button>
+                        <button class="btn btn-ghost" type="button" data-close-modal="modal-login">취소</button>
                         <button class="btn btn-primary" type="submit">로그인</button>
                     </div>
                 </form>
@@ -215,7 +257,7 @@
                         <input id="signup-password" class="input" type="password" name="password" required />
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-ghost" type="button" id="signup-cancel-btn" data-close-modal="modal-signup" data-allow-close="true">취소</button>
+                        <button class="btn btn-ghost" type="button" data-close-modal="modal-signup">취소</button>
                         <button class="btn btn-primary" type="submit">회원가입</button>
                     </div>
                 </form>
@@ -224,21 +266,6 @@
                     이미 계정이 있으신가요?
                     <button type="button" class="link-button" id="go-login-link">로그인</button>
                 </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🎉 다담 인트로 모달 -->
-    <div id="modal-intro" class="modal-backdrop">
-        <div class="modal intro-modal">
-            <div class="intro-logo">
-                <div class="logo-icon">다</div>
-                <div class="logo-text">DADAM</div>
-            </div>
-            <p class="intro-tagline">소중한 가족의 하루를 함께 기록해요</p>
-            <div class="intro-actions">
-                <button class="btn btn-primary" type="button" id="intro-login-btn">로그인</button>
-                <button class="btn btn-ghost" type="button" id="intro-signup-btn">회원가입</button>
             </div>
         </div>
     </div>
@@ -326,9 +353,9 @@
                                 class="select"
                         >
                             <option value="" selected>선택하기</option>
-                            <option value="dinner">식사</option>
-                            <option value="trip">여행</option>
-                            <option value="event">기타</option>
+                            <option value="식사">식사</option>
+                            <option value="여행">여행</option>
+                            <option value="기타">기타</option>
                         </select>
                     </div>
 

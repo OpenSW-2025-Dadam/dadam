@@ -54,9 +54,9 @@ public class UserService {
                 newFamilyCode = null;
             } else {
                 // 이미 존재하는 코드면 해당 가족에 합류, 없으면 내가 새 코드의 소유자가 됨
-                List<User> familyMembers = userRepository.findAllByFamilyCode(normalized);
-                if (!familyMembers.isEmpty()) {
-                    newFamilyCode = normalizeFamilyCode(familyMembers.get(0).getFamilyCode());
+                User owner = userRepository.findByFamilyCode(normalized).orElse(null);
+                if (owner != null) {
+                    newFamilyCode = owner.getFamilyCode();
                 } else {
                     newFamilyCode = normalized;
                 }

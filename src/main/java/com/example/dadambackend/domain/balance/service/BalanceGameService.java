@@ -54,9 +54,11 @@ public class BalanceGameService {
         User requester = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        String familyCode = requester.getFamilyCode();
+
         List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game)
                 .stream()
-                .filter(vote -> isSameFamily(vote.getUser(), requester))
+                .filter(vote -> isSameFamily(vote.getUser(), familyCode))
                 .toList();
 
         return BalanceGameTodayResponse.of(game, votes);
@@ -108,34 +110,22 @@ public class BalanceGameService {
             vote.updateChoice(finalChoice);
         }
 
+        String familyCode = user.getFamilyCode();
+
         // 최신 투표 결과 반환 (가족 코드 기준으로 제한)
         List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game)
                 .stream()
-                .filter(v -> isSameFamily(v.getUser(), user))
+                .filter(v -> isSameFamily(v.getUser(), familyCode))
                 .toList();
 
         return BalanceGameTodayResponse.of(game, votes);
     }
 
-    private boolean isSameFamily(User target, User requester) {
-        if (target.getId().equals(requester.getId())) {
-            return true;
-        }
-
-        String normalizedUser = normalize(target.getFamilyCode());
-        String normalizedRequest = normalize(requester.getFamilyCode());
-
-        if (normalizedUser == null || normalizedRequest == null) {
-            return false;
-        }
-
-        return normalizedUser.equals(normalizedRequest);
+    private boolean isSameFamily(User user, String familyCode) {
+        return normalize(user.getFamilyCode()).equals(normalize(familyCode));
     }
 
     private String normalize(String code) {
-        if (code == null) return null;
-        String trimmed = code.trim();
-        if (trimmed.isEmpty()) return null;
-        return trimmed.toUpperCase();
+        return (code == null || code.isBlank()) ? "" : code.trim();
     }
 }

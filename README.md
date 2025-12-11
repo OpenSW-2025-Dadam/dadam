@@ -12,6 +12,11 @@
 
 ---
 
+- [Dadam 서비스 바로가기](https://dadam.onrender.com/)
+- [협업 문서 Notion](https://quasar-ixia-6fa.notion.site/Dadam-26adfe9c8852801c8ce6eedf592e734f?source=copy_link)
+
+---
+
 ## **1. 서비스 개요**
 **다담**은 세대 간 소통 부족 문제를 해결하기 위해, 
 

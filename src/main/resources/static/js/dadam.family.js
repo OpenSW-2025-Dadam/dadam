@@ -9,14 +9,6 @@ const familyGridEl = document.getElementById("family-grid");
 const inviteCodeInput = document.getElementById("invite-code-value");
 const inviteFamilyListEl = document.getElementById("invite-family-list");
 const inviteFamilyCountEl = document.getElementById("invite-family-count");
-const familyProfileModal = document.getElementById("modal-family-profile");
-const familyProfileNameEl = document.getElementById("family-profile-name");
-const familyProfileRoleEl = document.getElementById("family-profile-role");
-const familyProfileEmailEl = document.getElementById("family-profile-email");
-const familyProfileCodeEl = document.getElementById("family-profile-code");
-const familyProfileAvatarEl = document.getElementById("family-profile-avatar");
-
-let latestFamilyMembers = [];
 
 /* -----------------------------------------------------
    🔹 공통 API GET (Bearer 토큰 포함)
@@ -254,12 +246,6 @@ function renderInviteFamilyMembers(members) {
         inviteFamilyCountEl.textContent =
             count > 0 ? `${count}명` : "구성원 없음";
     }
-
-    inviteFamilyListEl.querySelectorAll(".family-cell").forEach((btn) => {
-        const userId = btn.dataset.userId;
-        if (!userId || btn.classList.contains("family-add")) return;
-        btn.addEventListener("click", () => openFamilyProfile(userId));
-    });
 }
 
 async function openFamilyInviteModal() {
@@ -270,7 +256,6 @@ async function openFamilyInviteModal() {
         ]);
 
         const members = normalizeFamilyMembers(familyRaw);
-        syncFamilyGlobals(members);
 
         if (inviteCodeInput) {
             inviteCodeInput.value = codeResp.familyCode || "";
@@ -291,52 +276,6 @@ async function openFamilyInviteModal() {
 }
 
 window.openFamilyInviteModal = openFamilyInviteModal;
-
-function openFamilyProfile(userId) {
-    if (!familyProfileModal) return;
-
-    const member = latestFamilyMembers.find(
-        (m) => String(m.userId) === String(userId)
-    );
-
-    if (!member) return;
-
-    if (familyProfileNameEl) {
-        familyProfileNameEl.textContent = member.displayName;
-    }
-    if (familyProfileRoleEl) {
-        familyProfileRoleEl.textContent = getFamilyRoleLabel(
-            member.familyRole,
-            member.isMe
-        );
-    }
-    if (familyProfileEmailEl) {
-        familyProfileEmailEl.textContent = member.email || "-";
-    }
-    if (familyProfileCodeEl) {
-        familyProfileCodeEl.textContent = member.familyCode || "-";
-    }
-
-    if (familyProfileAvatarEl) {
-        const avatarHtml =
-            typeof buildAvatarHtml === "function"
-                ? buildAvatarHtml({
-                      userId: member.userId,
-                      userName: member.displayName,
-                      avatarUrl: member.avatarUrl,
-                      size: "lg",
-                      variant: member.isMe ? "accent" : "soft",
-                  })
-                : `<div class="avatar avatar-lg avatar-soft">
-                        <span class="avatar-initial">${getAvatarLabel(member.displayName)}</span>
-                    </div>`;
-        familyProfileAvatarEl.innerHTML = avatarHtml;
-    }
-
-    if (typeof openModal === "function") {
-        openModal("modal-family-profile");
-    }
-}
 
 document.getElementById("copy-invite-code")?.addEventListener("click", async () => {
     const code = inviteCodeInput?.value?.trim();

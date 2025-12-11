@@ -24,12 +24,19 @@ async function authPost(path, payload) {
             body: JSON.stringify(payload),
         });
 
-        if (!res.ok) {
-            let msg = "요청에 실패했어요.";
-            try {
-                const err = await res.json();
-                msg = err.message || err.errorCode || msg;
-            } catch (_) {}
+    if (!res.ok) { // 👈 400, 401, 500 등의 오류 응답
+        let msg = "요청에 실패했어요.";
+        try {
+            const err = await res.json();
+            msg = err.message || err.errorCode || msg; // 서버 오류 메시지를 가져옴
+
+            // 💡 [수정됨] 400 또는 401일 때, ID/PW 관련 오류를 일반적인 사용자 친화적 메시지로 덮어씁니다.
+            if (res.status === 401 || res.status === 400) {
+                // 백엔드에서 온 '비밀번호가 일치하지 않습니다.' 메시지를 대신할 메시지
+                msg = "이메일이나 비밀번호를 다시 확인하세요.";
+            }
+
+        } catch (_) {}
 
             addNotification?.({
                 type: "error",
@@ -47,9 +54,11 @@ async function authPost(path, payload) {
     } catch (networkErr) {
         addNotification?.({
             type: "error",
-            message: networkErr.message || "네트워크 오류가 발생했어요.",
+            message: msg, // 👈 알림 팝업 (Notification) 출력
         });
-        throw networkErr;
+
+        // 💡 예외를 던짐 (dadam.auth.js의 catch 블록으로 전달됨)
+        throw new Error(`Auth ${path} 실패: ${msg}`);
     }
 }
 
@@ -69,7 +78,6 @@ const DADAM_KEYS = {
 };
 
 const AUTH_MODAL_IDS = ["modal-login", "modal-signup"];
-const INTRO_MODAL_ID = "modal-intro";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -302,11 +310,9 @@ function setAuthUiState(loggedIn) {
     if (loggedIn) {
         appEl.classList.remove("is-blurred");
         AUTH_MODAL_IDS.forEach((id) => closeModal(id));
-        closeModal(INTRO_MODAL_ID);
     } else {
         appEl.classList.add("is-blurred");
         openModal("modal-login");
-        showIntroModal(true);
     }
 }
 
@@ -395,11 +401,7 @@ document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-close-modal]");
     if (!btn) return;
     const targetId = btn.dataset.closeModal;
-    if (
-        AUTH_MODAL_IDS.includes(targetId) &&
-        !isLoggedIn() &&
-        btn.dataset.allowClose !== "true"
-    ) {
+    if (AUTH_MODAL_IDS.includes(targetId) && !isLoggedIn()) {
         return;
     }
     closeModal(targetId);
@@ -460,7 +462,6 @@ $("#open-profile")?.addEventListener("click", () => {
 });
 
 $("#open-auth")?.addEventListener("click", () => {
-    closeModal(INTRO_MODAL_ID);
     openModal("modal-login");
 });
 
@@ -586,6 +587,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (err) {
             console.error("[LOGIN] failed:", err);
+            // 💡 [수정됨] 이 catch 블록에서 알림을 띄우는 코드를 제거합니다.
+            //    (알림은 authPost에서 이미 처리했기 때문)
         }
     });
 
@@ -638,10 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (err) {
             console.error("[SIGNUP] failed:", err);
-            addNotification?.({
-                type: "error",
-                message: err?.message || "회원가입 중 오류가 발생했어요.",
-            });
+            // 💡 [수정됨] 이 catch 블록에서 알림을 띄우는 코드를 제거합니다.
         }
     });
 });

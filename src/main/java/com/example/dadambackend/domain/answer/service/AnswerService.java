@@ -73,10 +73,12 @@ public class AnswerService {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        String familyCode = requester.getFamilyCode();
+
         List<Answer> answers = answerRepository.findByQuestionIdOrderByCreatedAtAsc(questionId);
 
         return answers.stream()
-                .filter(answer -> isSameFamily(answer.getUser(), requester))
+                .filter(answer -> isSameFamily(answer.getUser(), familyCode))
                 .map(answer -> {
                     long commentCount = commentRepository.countByAnswerId(answer.getId());
                     return AnswerResponse.of(answer, commentCount);
@@ -154,25 +156,13 @@ public class AnswerService {
         answerRepository.delete(answer);
     }
 
-    private boolean isSameFamily(User target, User requester) {
-        if (target.getId().equals(requester.getId())) {
-            return true;
-        }
-
-        String normalizedBase = normalize(requester.getFamilyCode());
+    private boolean isSameFamily(User target, String baseFamilyCode) {
+        String normalizedBase = normalize(baseFamilyCode);
         String normalizedTarget = normalize(target.getFamilyCode());
-
-        if (normalizedBase == null || normalizedTarget == null) {
-            return false;
-        }
-
         return normalizedBase.equals(normalizedTarget);
     }
 
     private String normalize(String code) {
-        if (code == null) return null;
-        String trimmed = code.trim();
-        if (trimmed.isEmpty()) return null;
-        return trimmed.toUpperCase();
+        return (code == null || code.isBlank()) ? "" : code.trim();
     }
 }
