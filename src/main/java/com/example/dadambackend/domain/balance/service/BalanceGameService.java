@@ -35,7 +35,7 @@ public class BalanceGameService {
      * 오늘의 밸런스 게임 조회 (없으면 생성)
      */
     @Transactional
-    public BalanceGameTodayResponse getOrCreateTodayGame() {
+    public BalanceGameTodayResponse getOrCreateTodayGame(Long currentUserId) {
         LocalDate today = LocalDate.now();
 
         BalanceGame game = balanceGameRepository.findByGameDate(today)
@@ -51,7 +51,14 @@ public class BalanceGameService {
                     return balanceGameRepository.save(newGame);
                 });
 
-        List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game);
+        User requester = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game)
+                .stream()
+                .filter(vote -> isSameFamily(vote.getUser(), requester))
+                .toList();
+
         return BalanceGameTodayResponse.of(game, votes);
     }
 
@@ -101,8 +108,34 @@ public class BalanceGameService {
             vote.updateChoice(finalChoice);
         }
 
-        // 최신 투표 결과 반환
-        List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game);
+        // 최신 투표 결과 반환 (가족 코드 기준으로 제한)
+        List<BalanceGameVote> votes = balanceGameVoteRepository.findByBalanceGame(game)
+                .stream()
+                .filter(v -> isSameFamily(v.getUser(), user))
+                .toList();
+
         return BalanceGameTodayResponse.of(game, votes);
+    }
+
+    private boolean isSameFamily(User target, User requester) {
+        if (target.getId().equals(requester.getId())) {
+            return true;
+        }
+
+        String normalizedUser = normalize(target.getFamilyCode());
+        String normalizedRequest = normalize(requester.getFamilyCode());
+
+        if (normalizedUser == null || normalizedRequest == null) {
+            return false;
+        }
+
+        return normalizedUser.equals(normalizedRequest);
+    }
+
+    private String normalize(String code) {
+        if (code == null) return null;
+        String trimmed = code.trim();
+        if (trimmed.isEmpty()) return null;
+        return trimmed.toUpperCase();
     }
 }

@@ -15,30 +15,42 @@ const API_BASE = "/api/v1";
 ----------------------------------------------------- */
 
 async function authPost(path, payload) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-        let msg = "요청에 실패했어요.";
-        try {
-            const err = await res.json();
-            msg = err.message || err.errorCode || msg;
-        } catch (_) {}
-
-        addNotification?.({
-            type: "error",
-            message: msg,
+    try {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
         });
 
-        throw new Error(`Auth ${path} 실패: ${msg}`);
-    }
+        if (!res.ok) {
+            let msg = "요청에 실패했어요.";
+            try {
+                const err = await res.json();
+                msg = err.message || err.errorCode || msg;
+            } catch (_) {}
 
-    return res.json();
+            addNotification?.({
+                type: "error",
+                message: msg,
+            });
+
+            throw new Error(`Auth ${path} 실패: ${msg}`);
+        }
+
+        try {
+            return await res.json();
+        } catch (parseErr) {
+            throw new Error("응답을 읽는 중 문제가 발생했어요.");
+        }
+    } catch (networkErr) {
+        addNotification?.({
+            type: "error",
+            message: networkErr.message || "네트워크 오류가 발생했어요.",
+        });
+        throw networkErr;
+    }
 }
 
 /* -----------------------------------------------------
@@ -612,6 +624,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (err) {
             console.error("[SIGNUP] failed:", err);
+            addNotification?.({
+                type: "error",
+                message: err?.message || "회원가입 중 오류가 발생했어요.",
+            });
         }
     });
 });

@@ -39,11 +39,14 @@ public class Schedule {
     @Column(nullable = false)
     private boolean remind;    // null 불가지만, create에서 기본값 false로 처리
 
+    @Column(name = "family_code")
+    private String familyCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     /* ---------- 팩토리 메서드 (생성용) ---------- */
-    public static Schedule create(ScheduleRequest request) {
+    public static Schedule create(ScheduleRequest request, String familyCode) {
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             throw new IllegalArgumentException("약속 이름(title)은 필수입니다.");
         }
@@ -59,6 +62,7 @@ public class Schedule {
         schedule.memo = emptyToNull(request.getMemo());
         schedule.type = emptyToNull(request.getType());
         schedule.remind = request.getRemind() != null && request.getRemind();
+        schedule.familyCode = normalizeFamilyCode(familyCode);
         schedule.createdAt = LocalDateTime.now();
         return schedule;
     }
@@ -96,5 +100,12 @@ public class Schedule {
 
     private static String emptyToNull(String s) {
         return (s == null || s.trim().isEmpty()) ? null : s.trim();
+    }
+
+    private static String normalizeFamilyCode(String familyCode) {
+        if (familyCode == null) return null;
+        String trimmed = familyCode.trim();
+        if (trimmed.isEmpty()) return null;
+        return trimmed.toUpperCase();
     }
 }

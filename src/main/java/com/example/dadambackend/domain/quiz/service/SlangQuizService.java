@@ -42,8 +42,14 @@ public class SlangQuizService {
         // 오늘 퀴즈 조회 or 생성
         SlangQuiz quiz = getOrCreateQuizForDate(today);
 
+        User requester = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         // 투표 + 유저 정보를 fetch join으로 한 번에 조회
-        List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz);
+        List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz)
+                .stream()
+                .filter(vote -> isSameFamily(vote.getUser(), requester))
+                .toList();
 
         return SlangQuizTodayResponse.of(quiz, votes, currentUserId);
     }
@@ -89,7 +95,10 @@ public class SlangQuizService {
         }
 
         // 5) 최신 결과 반환 (user fetch join)
-        List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz);
+        List<SlangQuizVote> votes = slangQuizVoteRepository.findByQuizWithUser(quiz)
+                .stream()
+                .filter(v -> isSameFamily(v.getUser(), user))
+                .toList();
         return SlangQuizTodayResponse.of(quiz, votes, userId);
     }
 
@@ -110,5 +119,27 @@ public class SlangQuizService {
                     SlangQuiz entity = SlangQuiz.of(date, generated);
                     return slangQuizRepository.save(entity);
                 });
+    }
+
+    private boolean isSameFamily(User target, User requester) {
+        if (target.getId().equals(requester.getId())) {
+            return true;
+        }
+
+        String normalizedTarget = normalize(target.getFamilyCode());
+        String normalizedRequest = normalize(requester.getFamilyCode());
+
+        if (normalizedTarget == null || normalizedRequest == null) {
+            return false;
+        }
+
+        return normalizedTarget.equals(normalizedRequest);
+    }
+
+    private String normalize(String code) {
+        if (code == null) return null;
+        String trimmed = code.trim();
+        if (trimmed.isEmpty()) return null;
+        return trimmed.toUpperCase();
     }
 }
