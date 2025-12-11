@@ -15,13 +15,14 @@ const API_BASE = "/api/v1";
 ----------------------------------------------------- */
 
 async function authPost(path, payload) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-    });
+    try {
+        const res = await fetch(`${API_BASE}${path}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
 
     if (!res.ok) { // 👈 400, 401, 500 등의 오류 응답
         let msg = "요청에 실패했어요.";
@@ -37,6 +38,20 @@ async function authPost(path, payload) {
 
         } catch (_) {}
 
+            addNotification?.({
+                type: "error",
+                message: msg,
+            });
+
+            throw new Error(`Auth ${path} 실패: ${msg}`);
+        }
+
+        try {
+            return await res.json();
+        } catch (parseErr) {
+            throw new Error("응답을 읽는 중 문제가 발생했어요.");
+        }
+    } catch (networkErr) {
         addNotification?.({
             type: "error",
             message: msg, // 👈 알림 팝업 (Notification) 출력
@@ -45,8 +60,6 @@ async function authPost(path, payload) {
         // 💡 예외를 던짐 (dadam.auth.js의 catch 블록으로 전달됨)
         throw new Error(`Auth ${path} 실패: ${msg}`);
     }
-
-    return res.json();
 }
 
 /* -----------------------------------------------------

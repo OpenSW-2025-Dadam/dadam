@@ -101,4 +101,11 @@ public class Schedule {
     private static String emptyToNull(String s) {
         return (s == null || s.trim().isEmpty()) ? null : s.trim();
     }
+
+    private static String normalizeFamilyCode(String familyCode) {
+        if (familyCode == null) return null;
+        String trimmed = familyCode.trim();
+        if (trimmed.isEmpty()) return null;
+        return trimmed.toUpperCase();
+    }
 }

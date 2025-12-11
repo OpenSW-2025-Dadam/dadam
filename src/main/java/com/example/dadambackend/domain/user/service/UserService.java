@@ -47,7 +47,7 @@ public class UserService {
         String newFamilyCode = user.getFamilyCode();
 
         if (familyCode != null) {
-            String normalized = familyCode.trim();
+            String normalized = normalizeFamilyCode(familyCode);
 
             if (normalized.isEmpty()) {
                 // 비워서 보냈다면 가족 코드 제거 (원하지 않으면 이 부분 막으면 됨)
@@ -94,13 +94,24 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<User> getFamilyMembers(Long userId) {
         User me = getById(userId);
-        String familyCode = me.getFamilyCode();
+        String familyCode = normalizeFamilyCode(me.getFamilyCode());
 
-        if (familyCode == null || familyCode.isBlank()) {
+        if (familyCode == null) {
             return Collections.singletonList(me);
         }
 
         return userRepository.findAllByFamilyCode(familyCode);
+    }
+
+    /**
+     * 가족 코드 문자열을 공통 규칙(양쪽 공백 제거 + 대문자)으로 정규화합니다.
+     * 값이 없으면 null을 반환하여 빈 문자열과 혼동되지 않도록 합니다.
+     */
+    private String normalizeFamilyCode(String code) {
+        if (code == null) return null;
+        String trimmed = code.trim();
+        if (trimmed.isEmpty()) return null;
+        return trimmed.toUpperCase();
     }
 
     // ⚠️ 회원가입/로그인 로직은 AuthService 로 분리 (여기에 두지 않음)
