@@ -139,7 +139,7 @@ async function fetchProfile() {
     if (profileFamilyCodeDisplay) {
         const normalizedCode = normalizeFamilyCode(currentUser?.familyCode);
         profileFamilyCodeDisplay.textContent = normalizedCode
-            ? `내 코드: ${normalizedCode}`
+            ? `내 가족 코드: ${normalizedCode}`
             : "코드 없음";
     }
 
@@ -180,7 +180,7 @@ async function updateProfile(formData) {
     if (profileFamilyCodeDisplay) {
         const normalizedCode = normalizeFamilyCode(currentUser?.familyCode);
         profileFamilyCodeDisplay.textContent = normalizedCode
-            ? `내 코드: ${normalizedCode}`
+            ? `내 가족 코드: ${normalizedCode}`
             : "코드 없음";
     }
 
