@@ -127,68 +127,145 @@
     <div id="modal-auth" class="modal-backdrop">
         <div class="modal">
             <header class="modal-header">
+                <div>
+                    <p class="modal-eyebrow">우리 가족</p>
+                    <h2 class="modal-title">초대 코드</h2>
+                </div>
+                <button class="ghost-icon-btn" type="button" data-close-modal="modal-invite">
+                    <span class="fh-icon-close"></span>
+                </button>
+            </header>
+            <div class="modal-body">
+                <div class="field-group">
+                    <label class="field-label" for="invite-code-value">초대 코드</label>
+                    <div class="field-row">
+                        <input
+                                id="invite-code-value"
+                                class="input"
+                                type="text"
+                                readonly
+                                value=""
+                                placeholder="로그인 후 코드를 발급받아 주세요"
+                        />
+                        <button class="btn btn-primary" type="button" id="copy-invite-code">복사</button>
+                    </div>
+                    <p class="helper-text">가족에게 코드를 전달하면 동일한 가족 공간을 공유할 수 있어요.</p>
+                </div>
+
+                <div class="field-group">
+                    <div class="field-row" style="justify-content: space-between; align-items: center;">
+                        <label class="field-label" style="margin: 0;">가족 구성원</label>
+                        <span class="helper-text" id="invite-family-count"></span>
+                    </div>
+                    <div class="family-grid" id="invite-family-list">
+                        <!-- JS에서 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 👤 가족 프로필 상세 모달 -->
+    <div id="modal-family-profile" class="modal-backdrop">
+        <div class="modal">
+            <header class="modal-header">
+                <h2 class="modal-title">가족 프로필</h2>
+                <button class="ghost-icon-btn" type="button" data-close-modal="modal-family-profile">
+                    <span class="fh-icon-close"></span>
+                </button>
+            </header>
+            <div class="modal-body">
+                <div class="profile-avatar-section" id="family-profile-avatar">
+                    <!-- JS 렌더링 -->
+                </div>
+                <div class="field-group">
+                    <label class="field-label">이름</label>
+                    <p class="field-value" id="family-profile-name"></p>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">역할</label>
+                    <p class="field-value" id="family-profile-role"></p>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">이메일</label>
+                    <p class="field-value" id="family-profile-email"></p>
+                </div>
+                <div class="field-group">
+                    <label class="field-label">가족 코드</label>
+                    <p class="field-value" id="family-profile-code"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔐 로그인 모달 -->
+    <div id="modal-login" class="modal-backdrop">
+        <div class="modal">
+            <header class="modal-header">
                 <h2 class="modal-title">로그인</h2>
-                <button class="ghost-icon-btn" type="button" data-close-modal="modal-auth">
+                <button class="ghost-icon-btn" type="button" data-close-modal="modal-login">
                     <span class="fh-icon-close"></span>
                 </button>
             </header>
 
             <div class="modal-body">
-                <!-- 탭 -->
-                <div class="auth-tabs">
-                    <button class="auth-tab is-active" type="button" data-auth-tab="login">로그인</button>
-                    <button class="auth-tab" type="button" data-auth-tab="signup">회원가입</button>
-                </div>
+                <form id="login-form">
+                    <div class="field-group">
+                        <label class="field-label" for="login-email">이메일</label>
+                        <input id="login-email" class="input" type="email" name="email" required />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="login-password">비밀번호</label>
+                        <input id="login-password" class="input" type="password" name="password" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-ghost" type="button" data-close-modal="modal-login">취소</button>
+                        <button class="btn btn-primary" type="submit">로그인</button>
+                    </div>
+                </form>
 
-                <!-- 로그인 패널 -->
-                <section class="auth-panel is-active" data-auth-panel="login">
-                    <form id="login-form">
-                        <div class="field-group">
-                            <label class="field-label" for="login-email">이메일</label>
-                            <input id="login-email" class="input" type="email" name="email" required />
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="login-password">비밀번호</label>
-                            <input id="login-password" class="input" type="password" name="password" required />
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-ghost" type="button" data-close-modal="modal-auth">취소</button>
-                            <button class="btn btn-primary" type="submit">로그인</button>
-                        </div>
-                    </form>
+                <p class="auth-helper-text">
+                    계정이 아직 없으신가요?
+                    <button type="button" class="link-button" id="go-signup-link">회원가입</button>
+                </p>
+            </div>
+        </div>
+    </div>
 
-                    <p class="auth-helper-text">
-                        계정이 아직 없으신가요?
-                        <button type="button" class="link-button" id="go-signup-link">회원가입</button>
-                    </p>
-                </section>
+    <!-- 🆕 회원가입 모달 -->
+    <div id="modal-signup" class="modal-backdrop">
+        <div class="modal">
+            <header class="modal-header">
+                <h2 class="modal-title">회원가입</h2>
+                <button class="ghost-icon-btn" type="button" data-close-modal="modal-signup">
+                    <span class="fh-icon-close"></span>
+                </button>
+            </header>
 
-                <!-- 회원가입 패널 -->
-                <section class="auth-panel" data-auth-panel="signup">
-                    <form id="signup-form">
-                        <div class="field-group">
-                            <label class="field-label" for="signup-name">이름</label>
-                            <input id="signup-name" class="input" type="text" name="name" required />
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="signup-email">이메일</label>
-                            <input id="signup-email" class="input" type="email" name="email" required />
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label" for="signup-password">비밀번호</label>
-                            <input id="signup-password" class="input" type="password" name="password" required />
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-ghost" type="button" data-close-modal="modal-auth">취소</button>
-                            <button class="btn btn-primary" type="submit">회원가입</button>
-                        </div>
-                    </form>
+            <div class="modal-body">
+                <form id="signup-form">
+                    <div class="field-group">
+                        <label class="field-label" for="signup-name">이름</label>
+                        <input id="signup-name" class="input" type="text" name="name" required />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="signup-email">이메일</label>
+                        <input id="signup-email" class="input" type="email" name="email" required />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="signup-password">비밀번호</label>
+                        <input id="signup-password" class="input" type="password" name="password" required />
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-ghost" type="button" data-close-modal="modal-signup">취소</button>
+                        <button class="btn btn-primary" type="submit">회원가입</button>
+                    </div>
+                </form>
 
-                    <p class="auth-helper-text">
-                        이미 계정이 있으신가요?
-                        <button type="button" class="link-button" id="go-login-link">로그인</button>
-                    </p>
-                </section>
+                <p class="auth-helper-text">
+                    이미 계정이 있으신가요?
+                    <button type="button" class="link-button" id="go-login-link">로그인</button>
+                </p>
             </div>
         </div>
     </div>

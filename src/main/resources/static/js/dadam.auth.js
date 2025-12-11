@@ -104,7 +104,8 @@ function handleAuthSuccess(data, message) {
 
         // 4) 로그인 모달 닫기
         if (typeof closeModal === "function") {
-            closeModal("modal-auth");
+            closeModal("modal-login");
+            closeModal("modal-signup");
         }
 
         // 4-1) ✅ 로그인/회원가입 성공 후 퀴즈 상태 리셋

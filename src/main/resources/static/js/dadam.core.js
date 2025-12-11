@@ -77,6 +77,8 @@ const DADAM_KEYS = {
     EVENTS: "dadam_events",
 };
 
+const AUTH_MODAL_IDS = ["modal-login", "modal-signup"];
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => document.querySelectorAll(selector);
 
@@ -307,9 +309,10 @@ function setAuthUiState(loggedIn) {
 
     if (loggedIn) {
         appEl.classList.remove("is-blurred");
+        AUTH_MODAL_IDS.forEach((id) => closeModal(id));
     } else {
         appEl.classList.add("is-blurred");
-        openModal("modal-auth");
+        openModal("modal-login");
     }
 }
 
@@ -387,7 +390,7 @@ function closeModal(id) {
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         document.querySelectorAll(".modal-backdrop.is-active").forEach((m) => {
-            if (m.id === "modal-auth" && !isLoggedIn()) return;
+            if (AUTH_MODAL_IDS.includes(m.id) && !isLoggedIn()) return;
             m.classList.remove("is-active");
         });
     }
@@ -398,7 +401,7 @@ document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-close-modal]");
     if (!btn) return;
     const targetId = btn.dataset.closeModal;
-    if (targetId === "modal-auth" && !isLoggedIn()) {
+    if (AUTH_MODAL_IDS.includes(targetId) && !isLoggedIn()) {
         return;
     }
     closeModal(targetId);
@@ -407,7 +410,7 @@ document.addEventListener("click", (e) => {
 /* 모달 바깥 클릭 시 닫기 – auth는 로그인 전이면 유지 */
 document.addEventListener("click", (e) => {
     if (!e.target.classList.contains("modal-backdrop")) return;
-    if (e.target.id === "modal-auth" && !isLoggedIn()) return;
+    if (AUTH_MODAL_IDS.includes(e.target.id) && !isLoggedIn()) return;
     e.target.classList.remove("is-active");
 });
 
@@ -455,7 +458,7 @@ $("#open-profile")?.addEventListener("click", () => {
 });
 
 $("#open-auth")?.addEventListener("click", () => {
-    setAuthUiState(false);
+    openModal("modal-login");
 });
 
 /* -----------------------------------------------------
@@ -504,36 +507,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
 
-    const loginTabBtn = document.querySelector('[data-auth-tab="login"]');
-    const signupTabBtn = document.querySelector('[data-auth-tab="signup"]');
-    const loginPanel = document.querySelector('[data-auth-panel="login"]');
-    const signupPanel = document.querySelector('[data-auth-panel="signup"]');
     const goSignupLink = document.getElementById("go-signup-link");
     const goLoginLink = document.getElementById("go-login-link");
 
-    function showAuthTab(which) {
-        if (!loginTabBtn || !signupTabBtn || !loginPanel || !signupPanel) return;
+    goSignupLink?.addEventListener("click", () => {
+        closeModal("modal-login");
+        openModal("modal-signup");
+    });
 
-        if (which === "login") {
-            loginTabBtn.classList.add("is-active");
-            signupTabBtn.classList.remove("is-active");
-            loginPanel.classList.add("is-active");
-            signupPanel.classList.remove("is-active");
-        } else {
-            signupTabBtn.classList.add("is-active");
-            loginTabBtn.classList.remove("is-active");
-            signupPanel.classList.add("is-active");
-            loginPanel.classList.remove("is-active");
-        }
-    }
-
-    loginTabBtn?.addEventListener("click", () => showAuthTab("login"));
-    signupTabBtn?.addEventListener("click", () => showAuthTab("signup"));
-    goSignupLink?.addEventListener("click", () => showAuthTab("signup"));
-    goLoginLink?.addEventListener("click", () => showAuthTab("login"));
-
-    // 기본은 로그인 탭
-    showAuthTab("login");
+    goLoginLink?.addEventListener("click", () => {
+        closeModal("modal-signup");
+        openModal("modal-login");
+    });
 
     // 🔹 로그인 폼 submit
     loginForm?.addEventListener("submit", async (e) => {
@@ -562,7 +547,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             setAuthUiState(true);
-            closeModal("modal-auth");
+            closeModal("modal-login");
+            closeModal("modal-signup");
 
             addNotification?.({
                 type: "info",
@@ -615,7 +601,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             setAuthUiState(true);
-            closeModal("modal-auth");
+            closeModal("modal-signup");
+            closeModal("modal-login");
 
             addNotification?.({
                 type: "info",

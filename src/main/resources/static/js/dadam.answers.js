@@ -39,6 +39,7 @@ let isEditingThread = false;
 
 /* 오늘 질문의 답변 목록 캐시 */
 let todaysAnswersCache = [];
+let latestAnswerProgressList = [];
 
 /* 댓글 글자 수 제한 (백엔드 Comment.MAX_COMMENT_LENGTH = 50) */
 const COMMENT_MAX_LENGTH = 50;
@@ -282,6 +283,8 @@ async function apiDelete(url) {
 function renderAnswerListFromData(answers) {
     if (!answerListEl) return;
 
+    latestAnswerProgressList = answers || [];
+
     if (!answers || answers.length === 0) {
         answerListEl.innerHTML = `
       <li class="answer-item">
@@ -342,24 +345,35 @@ function renderAnswerListFromData(answers) {
         .join("");
 
     answerListEl.innerHTML = html;
-    updateAnswerProgress(answers);
+    updateAnswerProgress(latestAnswerProgressList);
 }
 
 /* 참여 인원 Progress (ex: "3 / 4명 참여 중") */
 function updateAnswerProgress(answers) {
     if (!answerProgressPill) return;
 
-    const totalFamilies =
-        (typeof DADAM_FAMILY !== "undefined"
-            ? Object.keys(DADAM_FAMILY || {}).length
-            : 4) || 4;
+    const totalFamiliesFromGlobal =
+        typeof window.DADAM_FAMILY_COUNT === "number"
+            ? window.DADAM_FAMILY_COUNT
+            : typeof DADAM_FAMILY !== "undefined"
+              ? Object.keys(DADAM_FAMILY || {}).length
+              : 0;
 
     const participants = new Set(
         (answers || []).map((a) => a.userId ?? a.userName ?? a.id)
     ).size;
 
+    const totalFamilies =
+        totalFamiliesFromGlobal > 0
+            ? totalFamiliesFromGlobal
+            : Math.max(participants, 1);
+
     answerProgressPill.textContent = `${participants} / ${totalFamilies}명 참여 중`;
 }
+
+window.refreshAnswerProgressWithCurrentFamily = function () {
+    updateAnswerProgress(latestAnswerProgressList);
+};
 
 /* 오늘 질문 기준으로 답변 목록을 불러와 렌더링 */
 async function refreshAnswerList() {

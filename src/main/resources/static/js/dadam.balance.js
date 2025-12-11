@@ -286,7 +286,7 @@ async function handleBalanceChoice(choice) {
             message: "로그인 후에만 밸런스 게임에 참여할 수 있어요.",
         });
         if (typeof openModal === "function") {
-            openModal("modal-auth"); // 로그인 모달이 있다면 열기
+            openModal("modal-login"); // 로그인 모달이 있다면 열기
         }
         return;
     }

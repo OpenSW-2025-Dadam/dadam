@@ -979,7 +979,8 @@ body {
 }
 
 /* 로그인/회원가입 폼 */
-.modal-auth {
+#modal-login .modal,
+#modal-signup .modal {
   max-width: 400px;
 }
 

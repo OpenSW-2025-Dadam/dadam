@@ -113,6 +113,29 @@ function normalizeFamilyMembers(rawList) {
     });
 }
 
+function syncFamilyGlobals(members) {
+    latestFamilyMembers = members;
+
+    const map = {};
+    members.forEach((m) => {
+        if (m.userId == null) return;
+        map[String(m.userId)] = {
+            name: m.displayName,
+            avatarUrl: m.avatarUrl,
+            familyRole: m.familyRole,
+            email: m.email,
+            familyCode: m.familyCode,
+        };
+    });
+
+    window.DADAM_FAMILY = map;
+    window.DADAM_FAMILY_COUNT = members.length;
+
+    if (typeof window.refreshAnswerProgressWithCurrentFamily === "function") {
+        window.refreshAnswerProgressWithCurrentFamily();
+    }
+}
+
 /* -----------------------------------------------------
    🔹 멤버 1개 렌더링 (avatar + 이름 + role)
 ----------------------------------------------------- */
@@ -175,6 +198,12 @@ function renderFamilyGrid(members) {
     document.getElementById("family-add-btn")?.addEventListener("click", () => {
         document.getElementById("open-invite")?.click();
     });
+
+    familyGridEl.querySelectorAll(".family-cell").forEach((btn) => {
+        const userId = btn.dataset.userId;
+        if (!userId || btn.classList.contains("family-add")) return;
+        btn.addEventListener("click", () => openFamilyProfile(userId));
+    });
 }
 
 /* -----------------------------------------------------
@@ -185,6 +214,7 @@ async function fetchAndRenderFamilyMembers() {
         const raw = await familyApiGet(FAMILY_MEMBERS_API_URL);
         const members = normalizeFamilyMembers(raw);
 
+        syncFamilyGlobals(members);
         renderFamilyGrid(members);
     } catch (e) {
         console.error("[FAMILY] load error:", e);

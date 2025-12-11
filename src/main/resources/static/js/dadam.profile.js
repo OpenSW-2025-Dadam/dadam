@@ -173,6 +173,8 @@ async function updateProfile(formData) {
     }
 
     updateAvatarVisuals();
+
+    return data;
 }
 
 async function uploadAvatar(file) {
@@ -235,7 +237,7 @@ profileImageInput?.addEventListener("change", (e) => {
 /* -----------------------------------------------------
    이벤트: 프로필 정보 저장
 ----------------------------------------------------- */
-profileForm?.addEventListener("submit", (e) => {
+profileForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
@@ -248,7 +250,7 @@ profileForm?.addEventListener("submit", (e) => {
         formData.append("familyCode", rawCode);
     }
 
-    updateProfile(formData);
+    await updateProfile(formData);
     closeModal("modal-profile");
 });
 
