@@ -5,6 +5,8 @@
 ===================================================== */
 
 const FAMILY_MEMBERS_API_URL = "/api/v1/users/family";
+const FAMILY_MAX_MEMBERS = 10;
+let latestFamilyMembers = [];
 const familyGridEl = document.getElementById("family-grid");
 const inviteCodeInput = document.getElementById("invite-code-value");
 const inviteFamilyListEl = document.getElementById("invite-family-list");
@@ -188,14 +190,16 @@ function buildFamilyCellHtml(member) {
 /* -----------------------------------------------------
    🔹 '멤버 추가' 버튼
 ----------------------------------------------------- */
-function buildFamilyAddCellHtml() {
+function buildFamilyAddCellHtml(canAddMore) {
+    if (!canAddMore) return "";
+
     return `
-<!--      <button class="family-cell family-add" id="family-add-btn" type="button">-->
-<!--        <span class="avatar avatar-md avatar-dashed">-->
-<!--          <span class="fh-icon-plus"></span>-->
-<!--        </span>-->
-<!--        <span class="family-name">추가</span>-->
-<!--      </button>-->
+      <button class="family-cell family-add" id="family-add-btn" type="button">
+        <span class="avatar avatar-md avatar-dashed">
+          <span class="fh-icon-plus"></span>
+        </span>
+        <span class="family-name">멤버 추가</span>
+      </button>
     `;
 }
 
@@ -206,7 +210,9 @@ function renderFamilyGrid(members) {
     if (!familyGridEl) return;
 
     const cellsHtml = members.map(buildFamilyCellHtml).join("");
-    const addCellHtml = buildFamilyAddCellHtml();
+    const addCellHtml = buildFamilyAddCellHtml(
+        members.length < FAMILY_MAX_MEMBERS
+    );
 
     familyGridEl.innerHTML = cellsHtml + addCellHtml;
 
@@ -221,6 +227,81 @@ function renderFamilyGrid(members) {
         btn.addEventListener("click", () => openFamilyProfile(userId));
     });
 }
+
+function resolveFamilyMember(userId) {
+    if (!userId) return null;
+
+    const currentId = currentUser?.id;
+    const fromLatest = (latestFamilyMembers || []).find(
+        (m) => String(m.userId) === String(userId)
+    );
+
+    if (fromLatest) return fromLatest;
+
+    const fromMap = window.DADAM_FAMILY?.[String(userId)];
+    if (fromMap) {
+        return {
+            userId,
+            displayName: fromMap.name,
+            avatarUrl: fromMap.avatarUrl,
+            familyRole: fromMap.familyRole,
+            email: fromMap.email,
+            familyCode: fromMap.familyCode,
+            isMe: currentId != null && String(currentId) === String(userId),
+        };
+    }
+
+    return null;
+}
+
+function renderFamilyProfile(member) {
+    const avatarEl = document.getElementById("family-profile-avatar");
+    const nameEl = document.getElementById("family-profile-name");
+    const roleEl = document.getElementById("family-profile-role");
+    const emailEl = document.getElementById("family-profile-email");
+    const codeEl = document.getElementById("family-profile-code");
+
+    if (!member || !avatarEl || !nameEl || !roleEl || !emailEl || !codeEl) {
+        return;
+    }
+
+    const avatarHtml =
+        typeof buildAvatarHtml === "function"
+            ? buildAvatarHtml({
+                userId: member.userId,
+                userName: member.displayName,
+                avatarUrl: member.avatarUrl,
+                size: "lg",
+                variant: member.isMe ? "accent" : "",
+            })
+            : `<span class="avatar avatar-lg">${member.displayName?.slice(0, 2) ||
+            "가족"}</span>`;
+
+    avatarEl.innerHTML = avatarHtml;
+    nameEl.textContent = member.displayName || "우리 가족";
+    roleEl.textContent = getFamilyRoleLabel(member.familyRole, member.isMe);
+    emailEl.textContent = member.email || "이메일 정보가 없습니다.";
+    codeEl.textContent = member.familyCode || "가족 코드 없음";
+}
+
+function openFamilyProfile(userId) {
+    const member = resolveFamilyMember(userId);
+    if (!member) {
+        addNotification?.({
+            type: "warning",
+            message: "가족 정보를 불러오지 못했습니다.",
+        });
+        return;
+    }
+
+    renderFamilyProfile(member);
+
+    if (typeof openModal === "function") {
+        openModal("modal-family-profile");
+    }
+}
+
+window.openFamilyProfile = openFamilyProfile;
 
 /* -----------------------------------------------------
    🔹 서버에서 가족 멤버 목록 가져오기
@@ -260,8 +341,8 @@ function renderInviteFamilyMembers(members) {
 
     if (inviteFamilyCountEl) {
         const count = members.length;
-        inviteFamilyCountEl.textContent =
-            count > 0 ? `${count}명` : "구성원 없음";
+        const label = count > 0 ? `${count}명` : "구성원 없음";
+        inviteFamilyCountEl.textContent = `${label} / 최대 ${FAMILY_MAX_MEMBERS}명`;
     }
 }
 
