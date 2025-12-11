@@ -2,11 +2,12 @@
 ### *A Web Platform for Family Communication and Generational Bonding*  
 > **茶談(다담)**: 차를 마시며 나누는 이야기 → 가족이 함께 이야기하는 공간
 
-세대 간 소통 부족 문제를 해결하기 위해, **가족 구성원이 질문·퀴즈·밸런스 게임·댓글을 통해 자연스럽게 대화하도록 돕는 웹 서비스**입니다.
+세대 간 소통 부족 문제를 해결하기 위해, 
+**가족 구성원이 질문·퀴즈·밸런스 게임·댓글을 통해 자연스럽게 대화하도록 돕는 웹 서비스**입니다.
 
 ---
 
-## **1. 서비스 소개**
+## **1. 서비스 개요**
 
 다담은 커플 질문 앱 **“썸원”을 가족 단위로 확장한 웹 플랫폼**입니다.  
 매일 주어지는 대화 주제에 가족 모두가 참여하고, 다양한 상호작용 요소를 통해  
@@ -40,10 +41,10 @@
 
 ## **3. 기술 스택**
 
-- **Backend**: Spring Boot, JPA, MySQL, JWT  
-- **Frontend**: Thymeleaf, JavaScript  
-- **AI**: OpenAI API 기반 질문 추천  
-- **Deployment**: Render (CI/CD), GitHub  
+- **Backend**: Java, Spring Boot, MySQL 
+- **Frontend**: HTML, CSS, JavaScript, Thymeleaf  
+- **AI**: OpenAI API
+- **Deployment**: Render (CI/CD), Railway, GitHub  
 
 ---
 
@@ -77,6 +78,53 @@
   - 예: *"배고파요"*, *"공부 중"*, *"일하는 중"*  
 
 ---
+
+### **1) 프로젝트 클론**
+```bash
+git clone https://github.com/OpenSW-2025-Dadam/dadam-backend.git
+cd dadam-backend
+```
+
+---
+
+### **2) MySQL 데이터베이스 생성**
+```sql
+CREATE DATABASE dadam CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+---
+
+### **3) 환경 변수 설정 (`application.yml` 또는 환경 변수)**
+```
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/dadam?serverTimezone=Asia/Seoul
+SPRING_DATASOURCE_USERNAME=your_mysql_username
+SPRING_DATASOURCE_PASSWORD=your_mysql_password
+
+JWT_SECRET=your_jwt_secret_key
+AI_API_KEY=your_ai_api_key   # 선택: AI 사용 시 필요
+```
+
+---
+
+### **4) 애플리케이션 실행**
+```bash
+./mvnw spring-boot:run
+```
+또는 IDE에서 `DadamBackendApplication` 실행
+
+---
+
+### **5) 접속**
+```
+http://localhost:8080/
+```
+
+```
+http://localhost:8080/swagger-ui/index.html
+```
+
+---
+
 
 # **팀원 소감**
 
