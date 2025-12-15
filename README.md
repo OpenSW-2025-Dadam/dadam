@@ -53,7 +53,7 @@
 - **Backend**: Java, Spring Boot, MySQL 
 - **Frontend**: HTML, CSS, JavaScript, Thymeleaf  
 - **AI**: OpenAI API
-- **Deployment**: Render (CI/CD), Railway, GitHub  
+- **Deployment**: Render(CI/CD), Railway(MySQL), GitHub  
 
 ---
 
