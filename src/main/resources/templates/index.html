@@ -64,6 +64,44 @@
         </div>
     </header>
 
+    <section class="page-hero-strip" aria-label="가족 하이라이트">
+        <div class="page-hero-main">
+            <span class="pill pill-soft">차 한잔 타임</span>
+            <h2>오늘도 차 한잔처럼 가족이 연결되고 있어요</h2>
+            <p>따뜻한 잔을 사이에 두고 답변, 약속, 게임을 이어가요.</p>
+
+            <div class="hero-metrics">
+                <div class="hero-metric">
+                    <span class="label">답변 완료</span>
+                    <span class="value" id="hero-answer-progress">3 / 4명</span>
+                </div>
+                <div class="hero-metric">
+                    <span class="label">다가오는 일정</span>
+                    <span class="value">2건</span>
+                </div>
+                <div class="hero-metric">
+                    <span class="label">오늘의 미션</span>
+                    <span class="value">다 같이 1줄 댓글</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-actions">
+            <button class="btn btn-primary btn-sm" type="button"
+                    onclick="document.getElementById('open-schedule-modal')?.click();">
+                약속 바로 만들기
+            </button>
+            <button class="btn btn-ghost btn-sm" type="button"
+                    onclick="document.getElementById('open-notifications')?.click();">
+                알림 열기
+            </button>
+            <button class="btn btn-ghost btn-sm" type="button"
+                    onclick="document.getElementById('open-profile')?.click();">
+                프로필 관리
+            </button>
+        </div>
+    </section>
+
     <!-- ================= MAIN LAYOUT ================= -->
     <main class="main-layout">
         <!-- ====== MAIN COLUMN ====== -->
@@ -395,6 +433,31 @@
                         </div>
                     </li>
                 </ul>
+            </section>
+
+            <section class="card card-tip" aria-label="다담 활용 팁">
+                <header class="card-header">
+                    <div class="card-header-left">
+                        <h2 class="card-title">오늘의 다담 팁</h2>
+                        <p class="card-subtitle">가족이 바로 써볼 수 있는 미션이에요.</p>
+                    </div>
+                </header>
+                <div class="tip-list">
+                    <div class="tip-item">
+                        <span class="tip-icon">💡</span>
+                        <div>
+                            <p class="tip-title">서로의 답변에 공감 스티커 남기기</p>
+                            <p class="tip-desc">한 줄 댓글이라도 괜찮아요. 읽었단 신호를 남겨 보세요.</p>
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <span class="tip-icon">📌</span>
+                        <div>
+                            <p class="tip-title">주말 일정은 캘린더에 미리 추가</p>
+                            <p class="tip-desc">약속 만들기 버튼으로 알림까지 예약할 수 있어요.</p>
+                        </div>
+                    </div>
+                </div>
             </section>
         </aside>
     </main>

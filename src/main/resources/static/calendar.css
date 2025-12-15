@@ -1,4 +1,15 @@
 /* 캘린더 헤더 */
+:root {
+    /* 기존 matcha 토큰을 네이비/라일락 톤으로 재매핑 */
+    --matcha-main: #5566ff;
+    --matcha-main-soft: #eef0ff;
+    --matcha-dark: #3c49b8;
+    --matcha-accent: #fff0f5;
+    --matcha-border: rgba(25, 32, 46, 0.14);
+    --matcha-text-main: #0f172a;
+    --matcha-text-sub: #4b5563;
+}
+
 #calendar-title {
     font-size: 18px;
     font-weight: 600;
@@ -99,7 +110,7 @@
     background-color: var(--matcha-main-soft);
 }
 
-/* 기본: dinner = 말차 */
+/* 기본: dinner = 메인 하이라이트 */
 .calendar-event-dinner {
     background-color: var(--matcha-main);
 }

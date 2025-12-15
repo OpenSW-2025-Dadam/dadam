@@ -17,6 +17,7 @@ const answerInput = document.getElementById("answer-input");
 const answerLengthHint = document.getElementById("answer-length-hint");
 const answerListEl = document.getElementById("answer-list");
 const answerProgressPill = document.getElementById("answer-progress-pill");
+const heroAnswerProgressEl = document.getElementById("hero-answer-progress");
 
 const todayQuestionEl = document.getElementById("today-question-text");
 
@@ -368,7 +369,12 @@ function updateAnswerProgress(answers) {
             ? totalFamiliesFromGlobal
             : Math.max(participants, 1);
 
-    answerProgressPill.textContent = `${participants} / ${totalFamilies}명 참여 중`;
+    const progressText = `${participants} / ${totalFamilies}명 참여 중`;
+    answerProgressPill.textContent = progressText;
+
+    if (heroAnswerProgressEl) {
+        heroAnswerProgressEl.textContent = progressText;
+    }
 }
 
 window.refreshAnswerProgressWithCurrentFamily = function () {
