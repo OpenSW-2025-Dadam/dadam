@@ -194,7 +194,7 @@ main, header, section, aside {
 .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .card-header-left { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .card-title { margin: 0; font-size: 20px; font-weight: 700; }
-.card-subtitle { margin: 4px 0 0; color: var(--text-soft); font-size: 14px; }
+.card-subtitle { margin-top: 0; margin-bottom: 14px; color: var(--text-soft); font-size: 14px; }
 .card-header-right { display: flex; align-items: center; gap: 8px; }
 .today-header-right { flex-direction: column; align-items: flex-start; }
 
@@ -881,7 +881,7 @@ main, header, section, aside {
 .notification-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .notification-item { background: rgba(139, 92, 59, 0.04); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
 
-.answer-thread-actions { position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, #fff 40%); padding-top: 8px; }
+.answer-thread-actions { position: sticky; bottom: 0; padding-top: 8px; }
 
 .empty-placeholder { text-align: center; padding: 14px; border-radius: 12px; border: 1px dashed rgba(139, 92, 59, 0.25); color: var(--text-soft); }
 
