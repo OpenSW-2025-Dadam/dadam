@@ -364,6 +364,18 @@ main, header, section, aside {
     margin-top: 4px;
 }
 
+.answer-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.answer-stat-emoji {
+    font-size: 14px;
+}
+
 .meta-label {
     font-size: 12px;
     color: var(--text-soft);
@@ -407,6 +419,22 @@ main, header, section, aside {
     align-items: center;
     gap: 10px;
     margin-top: -4px;
+}
+
+.answer-like-button {
+    gap: 8px;
+}
+
+.answer-like-button .like-button-label {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.answer-like-button .like-count-number {
+    padding: 0;
+    background: none;
+    min-width: 0;
+    color: var(--text);
 }
 
 .answer-count-badge {
@@ -751,6 +779,81 @@ main, header, section, aside {
 .modal-title { margin: 0; font-size: 20px; font-weight: 800; }
 .modal-body { margin-top: 10px; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+/* 날짜별 약속 리스트 스타일 */
+#day-events-list { display: flex; flex-direction: column; gap: 10px; }
+
+.day-events-empty {
+    margin: 0;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px dashed rgba(139, 92, 59, 0.2);
+    background: rgba(139, 92, 59, 0.06);
+    color: var(--text-soft);
+    text-align: center;
+}
+
+.day-event-item {
+    width: 100%;
+    text-align: left;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(139, 92, 59, 0.16);
+    background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(139, 92, 59, 0.06));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 10px 26px rgba(52, 39, 28, 0.08);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    cursor: pointer;
+}
+
+.day-event-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 32px rgba(52, 39, 28, 0.12);
+    border-color: rgba(139, 92, 59, 0.3);
+}
+
+.day-event-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.day-event-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    background: rgba(139, 92, 59, 0.12);
+    color: var(--accent-strong);
+}
+
+.day-event-type.is-trip { background: rgba(59, 130, 246, 0.14); color: #1d4ed8; }
+.day-event-type.is-dinner { background: rgba(217, 119, 87, 0.16); color: #9a3412; }
+.day-event-type.is-etc { background: rgba(124, 58, 237, 0.12); color: #5b21b6; }
+
+.day-event-date { color: var(--text-soft); font-weight: 600; }
+
+.day-event-body { display: flex; flex-direction: column; gap: 6px; }
+.day-event-title { font-weight: 800; font-size: 16px; color: var(--text); }
+.day-event-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.day-event-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(139, 92, 59, 0.08);
+    color: var(--text-soft);
+    border: 1px solid rgba(139, 92, 59, 0.16);
+    font-weight: 600;
+}
 
 .helper-text, .text-soft { color: var(--text-soft); font-size: 13px; }
 .field-group { margin-bottom: 12px; }
