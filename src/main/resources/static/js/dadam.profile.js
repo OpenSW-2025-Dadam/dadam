@@ -25,7 +25,7 @@ function normalizeFamilyCode(value) {
 /* -----------------------------------------------------
    내부 헬퍼: currentUser에서 이름/아바타 URL 추출
 ----------------------------------------------------- */
-function getCurrentUserAvatarInfo(defaultNameForProfile = "우리 가족") {
+function getCurrentUserAvatarInfo(defaultNameForProfile = "내 프로필") {
     const name = currentUser?.name || defaultNameForProfile;
 
     // 백엔드에서 어떤 이름으로 내려오는지에 따라 확장
@@ -47,12 +47,13 @@ function updateAvatarVisuals() {
     // 헤더 이름 텍스트
     if (headerUsername) {
         headerUsername.textContent =
-            (window.currentUser && window.currentUser.name) || "우리 가족";
+            (window.currentUser && window.currentUser.name) || "내 프로필";
     }
 
     // 1) 헤더 아바타
     if (headerAvatar) {
-        const { name, avatarUrl } = getCurrentUserAvatarInfo("우리 가족");
+        headerAvatar.classList.add("avatar-soft");
+        const { name, avatarUrl } = getCurrentUserAvatarInfo("내 프로필");
 
         const label =
             typeof getAvatarLabel === "function"
@@ -76,6 +77,7 @@ function updateAvatarVisuals() {
 
     // 2) 프로필 모달 아바타
     if (profileAvatarPreview) {
+        profileAvatarPreview.classList.add("avatar-soft");
         const { name, avatarUrl } = getCurrentUserAvatarInfo("나");
 
         const label =

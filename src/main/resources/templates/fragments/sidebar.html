@@ -11,7 +11,7 @@
             <div class="card-header-left">
                 <h2 class="card-title">우리 가족</h2>
                 <p class="card-subtitle">
-                    프로필을 꾸미고, 가족을 초대해 보세요.
+<!--                    가족을 초대해 보세요.-->
                 </p>
             </div>
             <button class="btn btn-ghost" id="open-invite" type="button">
@@ -28,7 +28,7 @@
     <section class="card card-calendar">
         <header class="card-header">
             <div class="card-header-left">
-                <h2 class="card-title">11월 가족 캘린더</h2>
+                <h2 class="card-title">가족 캘린더</h2>
                 <p class="card-subtitle">
                     같이 밥 먹는 날, 여행, 기념일을 한눈에.
                 </p>
@@ -43,7 +43,7 @@
                 <button class="ghost-icon-btn" id="calendar-prev" type="button" aria-label="이전 달">
                     <span class="fh-icon-chevron-left"></span>
                 </button>
-                <div class="calendar-title" id="calendar-title">2025년 11월</div>
+                <div class="calendar-title" id="calendar-title">2025년 12월</div>
                 <button class="ghost-icon-btn" id="calendar-next" type="button" aria-label="다음 달">
                     <span class="fh-icon-chevron-right"></span>
                 </button>
@@ -53,6 +53,10 @@
             </div>
         </div>
 
+        <div class="event-list-header">
+            <p class="modal-eyebrow" style="margin: 0;">다가오는 약속</p>
+            <p class="helper-text" style="margin: 0;">오늘 이후 일정만 모아 보여드려요.</p>
+        </div>
         <!-- ✅ 일정 리스트: JS가 API 결과로 렌더 -->
         <div class="event-list" id="event-list"></div>
     </section>
@@ -72,16 +76,7 @@
             </button>
         </header>
 
-        <ul class="activity-list" id="activity-list">
-            <!-- 필요하면 나중에 실제 데이터로 교체 -->
-            <li class="activity-item">
-                <span class="activity-icon activity-type-answer"></span>
-                <div class="activity-text">
-                    <p class="activity-title">엄마가 오늘의 질문에 답변을 남겼어요.</p>
-                    <p class="activity-meta">3분 전</p>
-                </div>
-            </li>
-        </ul>
+        <ul class="activity-list" id="activity-list"></ul>
     </section>
 </aside>
 </body>

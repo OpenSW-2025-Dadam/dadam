@@ -1,8 +1,7 @@
 /* =====================================================
    dadam.core.js
    - 유저 정보 / 공통 상수
-   - 로컬스토리지 관리
-   - 인증 토큰 관리
+   - 인증 토큰 관리 (메모리 기반)
    - 알림(Notification) 시스템
    - 모달 시스템 (열기/닫기 + ESC)
 ===================================================== */
@@ -66,7 +65,7 @@ async function authPost(path, payload) {
 }
 
 /* -----------------------------------------------------
-   📌 공통 상수 & 로컬 저장 키
+   📌 공통 상수 & 메모리 저장 키
 ----------------------------------------------------- */
 
 const DADAM_KEYS = {
@@ -76,9 +75,12 @@ const DADAM_KEYS = {
     COMMENTS: "dadam_comments",
     BALANCE_GAME: "dadam_balance_game",
     QUIZ_STATE: "dadam_quiz_state",
-    AUTH_TOKEN: "dadam_auth_token", // 🔐 로그인 토큰 저장용
+    AUTH_TOKEN: "dadam_auth_token",
     EVENTS: "dadam_events",
 };
+
+// ⚡️ 로컬스토리지 대신 사용하는 메모리 저장소
+const memoryStore = {};
 
 const INTRO_MODAL_ID = "modal-intro";
 
@@ -98,11 +100,11 @@ function clearUserScopedStorage() {
         DADAM_KEYS.BALANCE_GAME,
         DADAM_KEYS.QUIZ_STATE,
         DADAM_KEYS.EVENTS,
-        // 필요하면 추가
+        DADAM_KEYS.NOTIFICATIONS,
     ];
 
     userScopedKeys.forEach((key) => {
-        localStorage.removeItem(key);
+        clearPersistedKey(key);
     });
 }
 
@@ -206,29 +208,17 @@ function buildAvatarHtml({
    👤 기본 유저 정보 (처음 접속 시 자동 생성)
 ----------------------------------------------------- */
 
-function loadUserProfile() {
-    const raw = localStorage.getItem(DADAM_KEYS.USER_PROFILE);
-    if (raw) {
-        try {
-            return JSON.parse(raw);
-        } catch (_) {}
-    }
+const defaultProfile = {
+    id: null,
+    name: "",
+    avatarUrl: null,
+    role: null,
+    familyRole: null,
+    familyCode: "",
+    email: "",
+};
 
-    const defaultProfile = {
-        id: null,
-        name: "우리 가족",
-        avatarUrl: null,
-        role: null,
-        familyRole: null,
-        familyCode: "",
-        email: "",
-    };
-
-    localStorage.setItem(DADAM_KEYS.USER_PROFILE, JSON.stringify(defaultProfile));
-    return defaultProfile;
-}
-
-let currentUser = loadUserProfile();
+let currentUser = { ...defaultProfile };
 
 function setCurrentUser(profile = {}) {
     const resolvedName = (() => {
@@ -242,7 +232,7 @@ function setCurrentUser(profile = {}) {
             return existing;
         }
 
-        return "우리 가족";
+        return "";
     })();
 
     currentUser = {
@@ -260,8 +250,9 @@ function setCurrentUser(profile = {}) {
         email: profile.email ?? currentUser.email ?? "",
     };
 
-    localStorage.setItem(DADAM_KEYS.USER_PROFILE, JSON.stringify(currentUser));
     applyCurrentUserToHeader();
+
+    save(DADAM_KEYS.USER_PROFILE, currentUser);
 }
 
 function applyCurrentUserToHeader() {
@@ -270,7 +261,7 @@ function applyCurrentUserToHeader() {
 
     if (!avatarWrapper) return;
 
-    const name = currentUser?.name || "우리 가족";
+    const name = currentUser?.name || "내 프로필";
     const avatarUrl =
         currentUser?.avatarUrl || currentUser?.profileImageUrl || null;
 
@@ -283,6 +274,7 @@ function applyCurrentUserToHeader() {
         userName: name,
         avatarUrl,
         size: "sm",
+        variant: "soft",
     });
 
     avatarWrapper.innerHTML = html;
@@ -297,27 +289,64 @@ document.addEventListener("DOMContentLoaded", () => {
 ----------------------------------------------------- */
 
 function save(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
+    memoryStore[key] = value;
+
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+        console.warn("[storage] save failed", err);
+    }
 }
 
 function load(key, fallback = null) {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    if (Object.prototype.hasOwnProperty.call(memoryStore, key)) {
+        return memoryStore[key];
+    }
+
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw !== null) {
+            const parsed = JSON.parse(raw);
+            memoryStore[key] = parsed;
+            return parsed;
+        }
+    } catch (err) {
+        console.warn("[storage] load failed", err);
+    }
+
+    return fallback;
+}
+
+function clearPersistedKey(key) {
+    delete memoryStore[key];
+    try {
+        localStorage.removeItem(key);
+    } catch (err) {
+        console.warn("[storage] remove failed", err);
+    }
 }
 
 /* -----------------------------------------------------
    🔐 인증 토큰 헬퍼
 ----------------------------------------------------- */
 
+let authToken = null;
+
 function getAuthToken() {
-    return localStorage.getItem(DADAM_KEYS.AUTH_TOKEN) || null;
+    if (authToken) return authToken;
+
+    const stored = load(DADAM_KEYS.AUTH_TOKEN, null);
+    authToken = stored || null;
+    return authToken;
 }
 
 function setAuthToken(token) {
-    if (token) {
-        localStorage.setItem(DADAM_KEYS.AUTH_TOKEN, token);
+    authToken = token || null;
+
+    if (authToken) {
+        save(DADAM_KEYS.AUTH_TOKEN, authToken);
     } else {
-        localStorage.removeItem(DADAM_KEYS.AUTH_TOKEN);
+        clearPersistedKey(DADAM_KEYS.AUTH_TOKEN);
     }
 }
 
@@ -336,7 +365,8 @@ function setAuthUiState(loggedIn) {
         closeModal(INTRO_MODAL_ID);
     } else {
         appEl.classList.add("is-blurred");
-        showIntroModal(true);
+        closeModal(INTRO_MODAL_ID);
+        openModal("modal-login");
     }
 }
 
@@ -358,6 +388,7 @@ function addNotification({ type = "info", message }) {
     save(DADAM_KEYS.NOTIFICATIONS, list);
 
     showNotificationBadge(true);
+    renderActivityList();
 }
 
 function showNotificationBadge(active) {
@@ -392,6 +423,50 @@ function renderNotifications() {
         .join("");
 
     showNotificationBadge(false);
+}
+
+function renderActivityList(limit = 3) {
+    const list = load(DADAM_KEYS.NOTIFICATIONS, []);
+    const container = document.getElementById("activity-list");
+    if (!container) return;
+
+    if (!list || list.length === 0) {
+        container.innerHTML = `
+      <li class="activity-item activity-empty">
+        <div class="activity-text">
+          <p class="activity-title">아직 표시할 활동이 없어요.</p>
+          <p class="activity-meta">가족과 함께 첫 활동을 남겨 보세요.</p>
+        </div>
+      </li>
+    `;
+        return;
+    }
+
+    const iconMap = {
+        success: "✔",
+        error: "!",
+        danger: "!",
+        warning: "!",
+        info: "茶",
+    };
+
+    container.innerHTML = list
+        .slice(0, limit)
+        .map((item) => {
+            const symbol = iconMap[item.type] || "茶";
+            const toneClass = item.type ? `activity-${item.type}` : "";
+
+            return `
+        <li class="activity-item ${toneClass}">
+          <span class="activity-icon">${symbol}</span>
+          <div class="activity-text">
+            <p class="activity-title">${item.message}</p>
+            <p class="activity-meta">${item.time}</p>
+          </div>
+        </li>
+      `;
+        })
+        .join("");
 }
 
 /* -----------------------------------------------------
@@ -439,6 +514,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("click", (e) => {
     if (!e.target.classList.contains("modal-backdrop")) return;
     if (AUTH_MODAL_IDS.includes(e.target.id) && !isLoggedIn()) return;
+    if (e.target.id === INTRO_MODAL_ID && !isLoggedIn()) return;
     e.target.classList.remove("is-active");
 });
 
@@ -467,7 +543,8 @@ $("#open-profile")?.addEventListener("click", () => {
     }
 
     $("#profile-name-input").value = currentUser.name || "";
-    $("#profile-role-input").value = currentUser.role || "child";
+    $("#profile-role-input").value =
+        currentUser.familyRole || currentUser.role || "";
 
     const avatarWrapper = $("#profile-avatar-preview");
     if (avatarWrapper) {
@@ -518,16 +595,30 @@ window.dadamNotify = function (msg) {
 ----------------------------------------------------- */
 
 document.addEventListener("DOMContentLoaded", () => {
-    applyCurrentUserToHeader();
+    const persistedToken = load(DADAM_KEYS.AUTH_TOKEN, null);
+    if (persistedToken) {
+        authToken = persistedToken;
+    }
+
+    const persistedUser = load(DADAM_KEYS.USER_PROFILE, null);
+    if (persistedUser) {
+        currentUser = { ...defaultProfile, ...persistedUser };
+        applyCurrentUserToHeader();
+    } else {
+        applyCurrentUserToHeader();
+    }
 
     // 처음 진입 시: 로그인 안 돼 있으면 블러 + 로그인 모달
     setAuthUiState(isLoggedIn());
 
+    renderActivityList();
+
     const logoutBtn = document.getElementById("logout-btn");
     logoutBtn?.addEventListener("click", () => {
         setAuthToken(null);
-        clearUserScopedStorage();              // 🔥 계정 데이터 싹 지우기
-        setCurrentUser(loadUserProfile());
+        clearUserScopedStorage();
+        currentUser = { ...defaultProfile };
+        applyCurrentUserToHeader();
         closeModal("modal-profile");
         setAuthUiState(false);
         addNotification({
@@ -535,9 +626,18 @@ document.addEventListener("DOMContentLoaded", () => {
             message: "로그아웃되었어요.",
         });
 
+        renderActivityList();
+
         // ✅ 로그아웃 후 퀴즈 상태도 초기화 (다음 로그인 계정 기준으로 다시 로드)
         if (typeof window.resetQuizForCurrentUser === "function") {
             window.resetQuizForCurrentUser();
         }
+
+        if (typeof window.clearAnswerSession === "function") {
+            window.clearAnswerSession();
+        }
+
+        window.DADAM_FAMILY = {};
+        window.DADAM_FAMILY_COUNT = 0;
     });
 });

@@ -5,7 +5,7 @@
 ===================================================== */
 
 const FAMILY_MEMBERS_API_URL = "/api/v1/users/family";
-const FAMILY_MAX_MEMBERS = 10;
+const FAMILY_MAX_MEMBERS = 50;
 let latestFamilyMembers = [];
 const familyGridEl = document.getElementById("family-grid");
 const inviteCodeInput = document.getElementById("invite-code-value");
@@ -20,7 +20,7 @@ function normalizeFamilyCode(value) {
    🔹 공통 API GET (Bearer 토큰 포함)
 ----------------------------------------------------- */
 async function familyApiGet(url) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "GET",
@@ -35,6 +35,9 @@ async function familyApiGet(url) {
             type: "error",
             message: "로그인이 필요합니다.",
         });
+        if (typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
         throw new Error("401 Unauthorized");
     }
 
@@ -47,7 +50,7 @@ async function familyApiGet(url) {
 }
 
 async function familyApiPost(url) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "POST",
@@ -62,6 +65,9 @@ async function familyApiPost(url) {
             type: "error",
             message: "로그인이 필요합니다.",
         });
+        if (typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
         throw new Error("401 Unauthorized");
     }
 
@@ -180,9 +186,11 @@ function buildFamilyCellHtml(member) {
 
     return `
       <button class="family-cell" type="button" data-user-id="${userId}">
-        ${avatarHtml}
-        <span class="family-name">${displayName}</span>
-<!--        <span class="family-role-badge">${roleLabel}</span>-->
+        <span class="family-cell-avatar">${avatarHtml}</span>
+        <span class="family-meta">
+          <span class="family-name">${displayName}</span>
+          <span class="family-role-badge">${roleLabel}</span>
+        </span>
       </button>
     `;
 }
@@ -347,6 +355,17 @@ function renderInviteFamilyMembers(members) {
 }
 
 async function openFamilyInviteModal() {
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+    if (!token) {
+        addNotification?.({
+            type: "warning",
+            message: "로그인 후 초대 코드를 확인할 수 있어요.",
+        });
+        if (typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
+        return;
+    }
     try {
         const [codeResp, familyRaw] = await Promise.all([
             familyApiPost("/api/v1/users/me/family-code"),

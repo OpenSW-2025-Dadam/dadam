@@ -89,15 +89,6 @@ const balanceQuestionEl = document.getElementById("balance-question");
 const balanceOptions = document.querySelectorAll(".balance-option");
 const regenBalanceBtn = document.getElementById("regen-balance");
 
-/* 로그인 JWT 토큰 가져오기 (localStorage 기준) */
-function getAuthToken() {
-    try {
-        return localStorage.getItem("dadam_auth_token");
-    } catch (e) {
-        return null;
-    }
-}
-
 /* 백엔드 응답 DTO (BalanceGameTodayResponse)
    {
      "id": 1,

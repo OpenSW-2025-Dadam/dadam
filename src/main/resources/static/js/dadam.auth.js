@@ -180,14 +180,9 @@ function handleAuthSuccess(data, message) {
         clearAuthFeedback("signup");
         // data 예시: { token: "...", user: { ... } }
 
-        // 1) 토큰 저장 → 항상 localStorage에도 저장
-        if (data.token) {
-            // 다른 곳에서 쓰는 setAuthToken 이 있으면 그대로 호출
-            if (typeof setAuthToken === "function") {
-                setAuthToken(data.token);
-            }
-            // ✅ JWT 토큰을 항상 localStorage에 저장
-            localStorage.setItem("dadam_auth_token", data.token);
+        // 1) 토큰 저장 (메모리 기반)
+        if (data.token && typeof setAuthToken === "function") {
+            setAuthToken(data.token);
         }
 
         // 2) currentUser 갱신 (헤더 아바타/이름 갱신까지 포함)
@@ -225,6 +220,10 @@ function handleAuthSuccess(data, message) {
 
         if (typeof updateAvatarVisuals === "function") {
             updateAvatarVisuals();
+        }
+
+        if (typeof fetchProfile === "function") {
+            fetchProfile();
         }
     } catch (err) {
         console.error("[AUTH] handleAuthSuccess error:", err);

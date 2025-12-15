@@ -34,7 +34,7 @@ function deriveDateForMonth(year, monthIndex) {
 }
 
 function archiveAuthHeaders(base = {}) {
-    const token = getAuthToken ? getAuthToken() : localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
     return {
         ...base,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -82,6 +82,7 @@ async function fetchJsonWithFallbacks(urls) {
 
 async function fetchQuestionByDate(dateKey) {
     const endpoints = [
+        `${API_BASE}/questions/by-date?date=${dateKey}`,
         `${API_BASE}/questions/history?date=${dateKey}`,
         `${API_BASE}/questions?date=${dateKey}`,
         `${API_BASE}/questions/date/${dateKey}`,
@@ -99,8 +100,8 @@ async function fetchAnswersForQuestion(questionId) {
     return res.json();
 }
 
-async function fetchCommentsForAnswer(questionId, answerId) {
-    const url = `${API_BASE}/questions/${questionId}/answers/${answerId}/comments`;
+async function fetchCommentsForAnswer(answerId) {
+    const url = `${API_BASE}/answers/${answerId}/comments`;
     try {
         const res = await fetch(url, {
             method: "GET",
@@ -230,7 +231,7 @@ async function loadArchiveForDate(dateKey) {
         if (question.id && Array.isArray(answers)) {
             const enriched = await Promise.all(
                 answers.map(async (ans) => {
-                    const comments = await fetchCommentsForAnswer(question.id, ans.id);
+                    const comments = await fetchCommentsForAnswer(ans.id);
                     return { ...ans, comments };
                 })
             );
@@ -241,9 +242,15 @@ async function loadArchiveForDate(dateKey) {
     } catch (err) {
         console.error("[ARCHIVE] load error", err);
         if (archiveQuestionTextEl) {
-            archiveQuestionTextEl.textContent = "질문을 불러오지 못했어요.";
+            const message = err?.message?.includes("401")
+                ? "로그인 후 지난 질문을 볼 수 있어요."
+                : "질문을 불러오지 못했어요.";
+            archiveQuestionTextEl.textContent = message;
         }
         renderArchiveAnswers([]);
+        if (err?.message?.includes("401") && typeof setAuthUiState === "function") {
+            setAuthUiState(false);
+        }
     }
 }
 

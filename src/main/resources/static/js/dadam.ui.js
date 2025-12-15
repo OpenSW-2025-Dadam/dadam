@@ -95,11 +95,33 @@ function parseDateKey(dateKey) {
     return new Date(y, m - 1, d);
 }
 
+function isUpcomingDate(dateKey) {
+    if (!dateKey) return false;
+    const target = parseDateKey(dateKey);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return target >= today;
+}
+
 /* 보기용: "2025-12-10" → "2025년 12월 10일" */
 function formatKoreanDate(dateStr) {
     if (!dateStr) return "";
     const [y, m, d] = dateStr.split("-").map(Number);
     return `${y}년 ${m}월 ${d}일`;
+}
+
+function getEventTypeMeta(type) {
+    const raw = type || "";
+    const lower = raw.toLowerCase();
+
+    if (lower.includes("여행")) {
+        return { emoji: "✈️", label: raw || "여행", className: "is-trip" };
+    }
+    if (lower.includes("식")) {
+        return { emoji: "🍽️", label: raw || "식사", className: "is-dinner" };
+    }
+
+    return { emoji: "📌", label: raw || "기타", className: "is-etc" };
 }
 
 /* -----------------------------------------------------
@@ -265,17 +287,22 @@ function renderCalendar(year, monthIndex) {
         const todaysEvents = events.filter((ev) => ev.date === dateKey);
 
         const dotWrapper = document.createElement("div");
+        dotWrapper.className = "calendar-event-dots";
+
         if (todaysEvents.length > 0) {
-            todaysEvents.slice(0, 2).forEach((ev) => {
-                const dot = document.createElement("div");
-                dot.className = "calendar-event-dot";
-                if (ev.type === "trip") {
-                    dot.classList.add("calendar-event-trip");
-                } else {
-                    dot.classList.add("calendar-event-dinner");
-                }
-                dotWrapper.appendChild(dot);
-            });
+            cell.classList.add("has-events");
+
+            const firstType = todaysEvents[0].type;
+            const badge = document.createElement("span");
+            badge.className = "calendar-event-badge";
+            if (firstType === "trip") badge.classList.add("calendar-badge-trip");
+            else if (firstType === "event") badge.classList.add("calendar-badge-event");
+            else badge.classList.add("calendar-badge-dinner");
+
+            badge.textContent = todaysEvents.length > 99
+                ? "99+"
+                : todaysEvents.length;
+            dotWrapper.appendChild(badge);
         }
 
         cell.appendChild(dayNumberEl);
@@ -293,25 +320,29 @@ function renderEventList() {
     if (!eventListEl) return;
 
     const events = loadEvents();
-    if (events.length === 0) {
+    const upcoming = events.filter((ev) => isUpcomingDate(ev.date));
+
+    if (upcoming.length === 0) {
         eventListEl.innerHTML = `
       <article class="event-item">
         <div class="event-dot event-type-dinner"></div>
         <div class="event-text">
-          <p class="event-title">등록된 가족 약속이 없어요.</p>
-          <p class="event-meta">오른쪽 상단 "약속 만들기" 버튼으로 첫 약속을 남겨보세요.</p>
+          <p class="event-title">다가오는 약속이 없어요.</p>
+          <p class="event-meta">오른쪽 상단 "약속 만들기" 버튼으로 새 약속을 남겨보세요.</p>
         </div>
       </article>
     `;
         return;
     }
 
-    const sorted = events.slice().sort((a, b) => {
+    const sorted = upcoming.slice().sort((a, b) => {
         if (a.date === b.date) return (a.time || "").localeCompare(b.time || "");
         return a.date.localeCompare(b.date);
     });
 
-    eventListEl.innerHTML = sorted
+    const limited = sorted.slice(0, 3);
+
+    eventListEl.innerHTML = limited
         .map((ev) => {
             const dateObj = parseDateKey(ev.date);
             const m = dateObj.getMonth() + 1;
@@ -417,14 +448,29 @@ async function openDayEventsModal(dateKey) {
         dayEventsListEl.innerHTML = schedules
             .map((s) => {
                 const ev = mapScheduleToEvent(s);
-                const timeLabel = ev.time ? ` · ${ev.time}` : "";
-                const placeLabel = ev.place ? ` · ${ev.place}` : "";
+                const { emoji, label: typeLabel, className: typeClass } =
+                    getEventTypeMeta(ev.type);
+                const timeChip = ev.time
+                    ? `<span class="day-event-chip">⏰ ${ev.time}</span>`
+                    : "";
+                const placeChip = ev.place
+                    ? `<span class="day-event-chip">📍 ${ev.place}</span>`
+                    : "";
                 return `
           <button type="button"
                   class="day-event-item"
                   data-schedule-id="${ev.id}">
-            <span class="day-event-title">${ev.title}</span>
-            <span class="day-event-meta">${formatKoreanDate(ev.date)}${timeLabel}${placeLabel}</span>
+            <div class="day-event-top">
+              <span class="day-event-type ${typeClass}">${emoji} ${typeLabel}</span>
+              <span class="day-event-date">📅 ${formatKoreanDate(ev.date)}</span>
+            </div>
+            <div class="day-event-body">
+              <span class="day-event-title">${ev.title}</span>
+              <div class="day-event-meta">
+                ${timeChip}
+                ${placeChip}
+              </div>
+            </div>
           </button>
         `;
             })

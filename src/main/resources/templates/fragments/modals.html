@@ -59,7 +59,7 @@
                     <!-- 👨‍👩‍👧 가족 코드 입력 영역 -->
                     <div class="field-group">
                         <div class="field-row" style="justify-content: space-between; align-items: center;">
-                            <label class="field-label" for="family-code-input"></label>
+                            <label class="field-label" for="family-code-input">가족 초대 코드</label>
                             <span class="helper-text" id="family-code-display"></span>
                         </div>
                         <div class="field-row">
@@ -67,9 +67,11 @@
                                     id="family-code-input"
                                     class="input"
                                     type="text"
-                                    placeholder="초대받은 가족 코드를 입력하세요"
+                                    placeholder="초대받은 가족 코드를 입력하거나 수정하세요"
+                                    autocomplete="off"
                             />
                         </div>
+                        <p class="helper-text">같은 초대 코드만 맞추면 몇 명이든 가족으로 함께할 수 있어요.</p>
                     </div>
 
                     <div class="modal-footer">
@@ -106,49 +108,7 @@
                                 value=""
                                 placeholder="로그인 후 코드를 발급받아 주세요"
                         />
-                        <button class="btn btn-primary" type="button" id="copy-invite-code">복사</button>
-                    </div>
-                    <p class="helper-text">가족 구성원들과 동일한 가족 코드를 사용해 주세요.</p>
-                </div>
-
-                <div class="field-group">
-                    <div class="field-row" style="justify-content: space-between; align-items: center;">
-                        <label class="field-label" style="margin: 0;">가족 구성원</label>
-                        <span class="helper-text" id="invite-family-count"></span>
-                    </div>
-                    <div class="family-grid" id="invite-family-list">
-                        <!-- JS에서 렌더링 -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔐 로그인 / 회원가입 모달 -->
-    <div id="modal-auth" class="modal-backdrop">
-        <div class="modal">
-            <header class="modal-header">
-                <div>
-                    <p class="modal-eyebrow">우리 가족</p>
-                    <h2 class="modal-title">초대 코드</h2>
-                </div>
-                <button class="ghost-icon-btn" type="button" data-close-modal="modal-invite">
-                    <span class="fh-icon-close"></span>
-                </button>
-            </header>
-            <div class="modal-body">
-                <div class="field-group">
-                    <label class="field-label" for="invite-code-value">초대 코드</label>
-                    <div class="field-row">
-                        <input
-                                id="invite-code-value"
-                                class="input"
-                                type="text"
-                                readonly
-                                value=""
-                                placeholder="로그인 후 코드를 발급받아 주세요"
-                        />
-                        <button class="btn btn-primary" type="button" id="copy-invite-code">복사</button>
+                        <button class="btn btn-primary invite-copy-btn" type="button" id="copy-invite-code">복사</button>
                     </div>
                     <p class="helper-text">가족 구성원들과 동일한 가족 코드를 사용해 주세요.</p>
                 </div>
@@ -201,24 +161,25 @@
                 </button>
             </header>
             <div class="modal-body">
-                <div class="profile-avatar-section" id="family-profile-avatar">
-                    <!-- JS 렌더링 -->
+                <div class="family-profile-hero">
+                    <div class="profile-avatar-section" id="family-profile-avatar">
+                        <!-- JS 렌더링 -->
+                    </div>
+                    <div class="family-profile-hero-text">
+                        <p class="family-profile-name" id="family-profile-name"></p>
+                        <span class="family-profile-role-chip" id="family-profile-role"></span>
+                    </div>
                 </div>
-                <div class="field-group">
-                    <label class="field-label">이름</label>
-                    <p class="field-value" id="family-profile-name"></p>
-                </div>
-                <div class="field-group">
-                    <label class="field-label">역할</label>
-                    <p class="field-value" id="family-profile-role"></p>
-                </div>
-                <div class="field-group">
-                    <label class="field-label">이메일</label>
-                    <p class="field-value" id="family-profile-email"></p>
-                </div>
-                <div class="field-group">
-                    <label class="field-label">가족 코드</label>
-                    <p class="field-value" id="family-profile-code"></p>
+
+                <div class="profile-info-grid">
+                    <div class="info-card">
+                        <p class="info-label">이메일</p>
+                        <p class="info-value" id="family-profile-email"></p>
+                    </div>
+                    <div class="info-card">
+                        <p class="info-label">가족 코드</p>
+                        <p class="info-value" id="family-profile-code"></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -570,19 +531,27 @@
                 </button>
             </header>
             <div class="modal-body">
-                <div id="answer-thread-main"></div>
-                <div class="answer-thread-actions" id="answer-thread-actions"
-                     style="margin-top:12px; gap:8px; display:flex; justify-content:flex-end;">
-                    <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-btn">수정</button>
-                    <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-cancel-btn" style="display:none;">수정 취소</button>
-                    <button class="btn btn-danger btn-sm" type="button" id="answer-delete-btn">삭제</button>
+                <div class="answer-thread-card">
+                    <div id="answer-thread-main" class="answer-thread-main"></div>
+                    <div class="answer-thread-actions" id="answer-thread-actions">
+                        <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-btn">수정</button>
+                        <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-cancel-btn" style="display:none;">수정 취소</button>
+                        <button class="btn btn-danger btn-sm" type="button" id="answer-delete-btn">삭제</button>
+                    </div>
                 </div>
-                <hr />
+
+                <div class="comment-section-heading">
+<!--                    <div>-->
+<!--                        <p class="modal-eyebrow">댓글</p>-->
+<!--                        <h3 class="comment-section-title">가족의 한마디</h3>-->
+<!--                    </div>-->
+                </div>
+
                 <ul class="comment-list" id="comment-list"></ul>
 
                 <form id="comment-form" class="comment-form">
                     <div class="field-group">
-                        <label class="field-label" for="comment-input">댓글 남기기</label>
+                        <div class="comment-section-heading"></div>
                         <textarea id="comment-input" class="textarea" rows="2" placeholder="가족에게 따뜻한 한 마디를 남겨 보세요."></textarea>
                     </div>
                     <div class="modal-footer">

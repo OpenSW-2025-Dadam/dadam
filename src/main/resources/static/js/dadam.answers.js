@@ -45,8 +45,9 @@ let latestAnswerProgressList = [];
 /* 댓글 글자 수 제한 (백엔드 Comment.MAX_COMMENT_LENGTH = 50) */
 const COMMENT_MAX_LENGTH = 50;
 
-/* 질문 만족도 로컬스토리지 키 */
+/* 질문 만족도 메모리 캐시 */
 const QUESTION_RATING_KEY = "dadam_question_rating";
+let questionRatingMap = {};
 
 /* -----------------------------------------------------
    🧩 헬퍼 함수
@@ -130,7 +131,7 @@ function isMyComment(comment) {
 ----------------------------------------------------- */
 
 async function apiGet(url) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "GET",
@@ -156,7 +157,7 @@ async function apiGet(url) {
 }
 
 async function apiPost(url, body) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "POST",
@@ -188,7 +189,7 @@ async function apiPost(url, body) {
 
 /* ✅ PATCH (답변 수정에 사용) */
 async function apiPatch(url, body) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "PATCH",
@@ -220,7 +221,7 @@ async function apiPatch(url, body) {
 
 /* ✅ PUT (댓글 수정에 사용) */
 async function apiPut(url, body) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "PUT",
@@ -252,7 +253,7 @@ async function apiPut(url, body) {
 
 /* ✅ DELETE (답변/댓글 삭제) */
 async function apiDelete(url) {
-    const token = localStorage.getItem("dadam_auth_token");
+    const token = typeof getAuthToken === "function" ? getAuthToken() : null;
 
     const res = await fetch(url, {
         method: "DELETE",
@@ -312,12 +313,12 @@ function renderAnswerListFromData(answers) {
 
             const text = a.content || a.text || "";
             const preview =
-                text.length > 70 ? text.slice(0, 70) + "..." : text;
+                text.length > 120 ? text.slice(0, 120) + "..." : text;
 
             return `
         <li class="answer-item" data-answer-id="${a.id}">
-          <button class="answer-main" type="button">
-            <div class="answer-user">
+          <article class="answer-thread-card answer-card-preview" aria-label="${escapeHtml(displayName)}님의 답변">
+            <header class="answer-user">
               <span class="avatar avatar-sm avatar-soft">
                 <span class="avatar-initial">${avatarLabel}</span>
               </span>
@@ -325,21 +326,19 @@ function renderAnswerListFromData(answers) {
                 <span class="answer-name">${escapeHtml(displayName)}</span>
                 <span class="answer-time">${formatTimeLabel(a.createdAt)}</span>
               </div>
+            </header>
+            <p class="answer-thread-text answer-thread-preview">${escapeHtml(preview).replace(/\n/g, "<br>")}</p>
+            <div class="answer-preview-meta">
+              <div class="answer-stat" aria-label="좋아요 수">
+                <span class="answer-stat-emoji" aria-hidden="true">❤️</span>
+                <span class="meta-count">${likeCount}</span>
+              </div>
+              <div class="answer-stat" aria-label="댓글 수">
+                <span class="answer-stat-emoji" aria-hidden="true">💬</span>
+                <span class="meta-count">${commentCount}</span>
+              </div>
             </div>
-            <p class="answer-preview">
-              ${escapeHtml(preview)}
-            </p>
-          </button>
-          <div class="answer-meta">
-            <button class="meta-btn like-btn" type="button">
-              <span class="fh-icon-heart"></span>
-              <span class="meta-count">${likeCount}</span>
-            </button>
-            <button class="meta-btn comment-btn" type="button">
-              <span class="fh-icon-comment"></span>
-              <span class="meta-count">${commentCount}</span>
-            </button>
-          </div>
+          </article>
         </li>
       `;
         })
@@ -445,9 +444,12 @@ async function handleAnswerSubmit(e) {
         updateAnswerLengthHint();
         await refreshAnswerList();
 
+        const notifierName = (currentUser?.name || "").trim();
+        const notifierLabel = notifierName ? `${notifierName}님이` : "누군가";
+
         addNotification?.({
             type: "info",
-            message: "오늘의 질문에 답변을 남겼어요.",
+            message: `${notifierLabel} 오늘의 질문에 답변을 남겼어요.`,
         });
     } catch (err) {
         console.error("[ANSWERS] submit error:", err);
@@ -502,6 +504,8 @@ function openAnswerThread(answerId) {
             ? getAvatarLabel(displayName)
             : displayName;
     const text = answer.content || answer.text || "";
+    const likeCount = answer.likeCount ?? 0;
+    const likedClass = answer.isLiked ? "is-liked" : "";
 
     answerThreadMainEl.innerHTML = `
     <header class="answer-user">
@@ -516,6 +520,13 @@ function openAnswerThread(answerId) {
     <p class="answer-thread-text" id="answer-thread-text">
       ${escapeHtml(text).replace(/\n/g, "<br>")}
     </p>
+    <div class="answer-thread-meta">
+      <button class="answer-count-badge thread-like-btn answer-like-button ${likedClass}" type="button" data-answer-id="${answer.id}" aria-label="좋아요">
+        <span class="answer-stat-emoji" aria-hidden="true">❤️</span>
+        <span class="like-button-label">좋아요</span>
+        <span class="like-count-number" id="answer-thread-like-count">${likeCount}</span>
+      </button>
+    </div>
  `;
 
     // ✅ 내 답변일 때만 수정/삭제 버튼 노출
@@ -602,6 +613,15 @@ async function renderCommentList(answerId) {
         `;
             })
             .join("");
+
+        const target = todaysAnswersCache.find(
+            (a) => String(a.id) === String(answerId)
+        );
+        if (target) {
+            target.commentCount = comments.length;
+            updateThreadMetaCounts(target);
+            renderAnswerListFromData(todaysAnswersCache);
+        }
     } catch (err) {
         console.error("[COMMENTS] list error:", err);
         commentListEl.innerHTML = `
@@ -640,6 +660,7 @@ async function handleCommentSubmit(e) {
     if (target) {
         target.commentCount = (target.commentCount || 0) + 1;
         renderAnswerListFromData(todaysAnswersCache);
+        updateThreadMetaCounts(target);
     }
 
     const voterName =
@@ -650,7 +671,7 @@ async function handleCommentSubmit(e) {
 
     addNotification?.({
         type: "info",
-        message: "${voterName}님이 가족의 답변에 댓글을 남겼어요.",
+        message: `${voterName}님이 가족의 답변에 댓글을 남겼어요.`,
     });
 }
 
@@ -783,6 +804,7 @@ async function handleCommentDelete(answerId, commentId) {
                 (target.commentCount || 0) - 1
             );
             renderAnswerListFromData(todaysAnswersCache);
+            updateThreadMetaCounts(target);
         }
 
         addNotification?.({
@@ -977,43 +999,46 @@ async function deleteThreadAnswer() {
    ❤️ 좋아요(하트) 토글 (프론트 로컬 전용, 개별 답변용)
 ----------------------------------------------------- */
 
+function updateThreadMetaCounts(answerData) {
+    const likeCountEl = document.getElementById("answer-thread-like-count");
+
+    if (likeCountEl && answerData.likeCount != null) {
+        likeCountEl.textContent = answerData.likeCount;
+    }
+}
+
 function toggleLikeForAnswer(answerId) {
-    const item = document.querySelector(
-        `.answer-item[data-answer-id="${answerId}"]`
+    const target = todaysAnswersCache.find(
+        (a) => String(a.id) === String(answerId)
     );
-    if (!item) return;
+    if (!target) return;
 
-    const countEl = item.querySelector(".like-btn .meta-count");
-    if (!countEl) return;
+    const currentlyLiked = !!target.isLiked;
+    const delta = currentlyLiked ? -1 : 1;
+    target.isLiked = !currentlyLiked;
+    target.likeCount = Math.max(0, (target.likeCount || 0) + delta);
 
-    const current = Number(countEl.textContent || "0") || 0;
-    const newCount = current === 0 ? 1 : 0;
-    countEl.textContent = String(newCount);
+    if (currentThreadAnswer && currentThreadAnswer.id === target.id) {
+        currentThreadAnswer.isLiked = target.isLiked;
+        currentThreadAnswer.likeCount = target.likeCount;
+    }
+
+    updateThreadMetaCounts(target);
+    renderAnswerListFromData(todaysAnswersCache);
 }
 
 /* -----------------------------------------------------
    ⭐ 질문 만족도 조사 (프론트 전용, 로컬 저장)
 ----------------------------------------------------- */
 
-/* 로컬스토리지에서 질문별 만족도 데이터 로드 */
+/* 메모리에서 질문별 만족도 데이터 로드 */
 function loadQuestionRatingMap() {
-    const raw = localStorage.getItem(QUESTION_RATING_KEY);
-    if (!raw) return {};
-    try {
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === "object" ? parsed : {};
-    } catch (_) {
-        return {};
-    }
+    return { ...questionRatingMap };
 }
 
-/* 로컬스토리지에 질문별 만족도 데이터 저장 */
+/* 메모리에 질문별 만족도 데이터 저장 */
 function saveQuestionRatingMap(map) {
-    try {
-        localStorage.setItem(QUESTION_RATING_KEY, JSON.stringify(map));
-    } catch (_) {
-        // 용량 초과 등은 조용히 무시
-    }
+    questionRatingMap = { ...map };
 }
 
 /* 현재 질문에 대해 저장된 만족도 값을 UI에 반영 */
@@ -1068,6 +1093,12 @@ function initQuestionRating() {
     });
 }
 
+window.clearAnswerSession = function () {
+    questionRatingMap = {};
+    todaysAnswersCache = [];
+    latestAnswerProgressList = [];
+};
+
 /* -----------------------------------------------------
    🎯 이벤트 리스너 등록
 ----------------------------------------------------- */
@@ -1085,29 +1116,24 @@ commentForm?.addEventListener("submit", (e) => {
     handleCommentSubmit(e);
 });
 
-/* 답변 아이템 클릭 / 좋아요 / 댓글 버튼 (이벤트 위임) */
+/* 답변 아이템 클릭 / 좋아요 (이벤트 위임) */
 document.addEventListener("click", (e) => {
+    const threadLikeBtn = e.target.closest(".thread-like-btn");
+    if (threadLikeBtn) {
+        const targetId =
+            threadLikeBtn.dataset.answerId || currentThreadAnswerId;
+        if (targetId) {
+            toggleLikeForAnswer(targetId);
+        }
+        return;
+    }
+
     const answerItem = e.target.closest(".answer-item");
     if (!answerItem) return;
     const answerId = answerItem.dataset.answerId;
     if (!answerId) return;
 
-    const likeBtn = e.target.closest(".like-btn");
-    if (likeBtn) {
-        toggleLikeForAnswer(answerId);
-        return;
-    }
-
-    const commentBtn = e.target.closest(".comment-btn");
-    if (commentBtn) {
-        openAnswerThread(answerId);
-        return;
-    }
-
-    const mainBtn = e.target.closest(".answer-main");
-    if (mainBtn) {
-        openAnswerThread(answerId);
-    }
+    openAnswerThread(answerId);
 });
 
 /* ✅ 모달 내 답변 수정 / 취소 / 삭제 버튼 */

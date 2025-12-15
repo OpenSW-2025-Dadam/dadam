@@ -7,20 +7,9 @@
 
     <header class="card-header">
         <div class="card-header-left">
-            <span class="pill pill-soft">오늘의 질문</span>
-            <div class="card-title-wrap">
-                <h1 class="card-title" id="today-question-title">
-                    오늘 가족에게 던지는 한 가지 질문
-                </h1>
-                <p class="card-subtitle">
-                    모두가 한 번씩 답하면, 내일 새로운 질문이 열려요 ✨
-                </p>
-            </div>
+            <span class="pill pill-soft">오늘의 다담 주제</span>
         </div>
-        <div class="card-header-right">
-            <div class="date-badge">
-                <span id="today-label">2025년 12월 18일</span>
-            </div>
+        <div class="card-header-right today-header-right">
             <button class="ghost-icon-btn" id="open-question-archive" type="button">
                 <span class="fh-icon-calendar"></span>
                 <span>지난 질문 보기</span>
@@ -30,9 +19,6 @@
 
     <div class="question-main">
         <div class="question-text-wrap">
-            <p class="question-tagline">
-                오늘의 다담 주제
-            </p>
 
             <!-- ✅ 질문 ID를 data-question-id로 바인딩 -->
             <p
@@ -76,9 +62,6 @@
 <!--        </div>-->
 
         <form class="answer-form" id="answer-form">
-            <label class="field-label" for="answer-input">
-                내 답변 적어보기
-            </label>
             <div class="textarea-shell">
                 <textarea
                         id="answer-input"
