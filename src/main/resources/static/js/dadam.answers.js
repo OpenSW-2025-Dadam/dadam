@@ -329,12 +329,12 @@ function renderAnswerListFromData(answers) {
             </header>
             <p class="answer-thread-text answer-thread-preview">${escapeHtml(preview).replace(/\n/g, "<br>")}</p>
             <div class="answer-preview-meta">
-              <div class="answer-count-badge" aria-label="좋아요 수">
-                <span class="fh-icon-heart"></span>
+              <div class="answer-stat" aria-label="좋아요 수">
+                <span class="answer-stat-emoji" aria-hidden="true">❤️</span>
                 <span class="meta-count">${likeCount}</span>
               </div>
-              <div class="answer-count-badge" aria-label="댓글 수">
-                <span class="fh-icon-comment"></span>
+              <div class="answer-stat" aria-label="댓글 수">
+                <span class="answer-stat-emoji" aria-hidden="true">💬</span>
                 <span class="meta-count">${commentCount}</span>
               </div>
             </div>
@@ -505,7 +505,6 @@ function openAnswerThread(answerId) {
             : displayName;
     const text = answer.content || answer.text || "";
     const likeCount = answer.likeCount ?? 0;
-    const commentCount = answer.commentCount ?? 0;
     const likedClass = answer.isLiked ? "is-liked" : "";
 
     answerThreadMainEl.innerHTML = `
@@ -522,14 +521,11 @@ function openAnswerThread(answerId) {
       ${escapeHtml(text).replace(/\n/g, "<br>")}
     </p>
     <div class="answer-thread-meta">
-      <button class="answer-count-badge thread-like-btn ${likedClass}" type="button" data-answer-id="${answer.id}" aria-label="좋아요">
-        <span class="fh-icon-heart"></span>
-        <span class="meta-count" id="answer-thread-like-count">${likeCount}</span>
+      <button class="answer-count-badge thread-like-btn answer-like-button ${likedClass}" type="button" data-answer-id="${answer.id}" aria-label="좋아요">
+        <span class="answer-stat-emoji" aria-hidden="true">❤️</span>
+        <span class="like-button-label">좋아요</span>
+        <span class="like-count-number" id="answer-thread-like-count">${likeCount}</span>
       </button>
-      <div class="answer-count-badge" aria-label="댓글 수">
-        <span class="fh-icon-comment"></span>
-        <span class="meta-count" id="answer-thread-comment-count">${commentCount}</span>
-      </div>
     </div>
  `;
 
@@ -1005,15 +1001,9 @@ async function deleteThreadAnswer() {
 
 function updateThreadMetaCounts(answerData) {
     const likeCountEl = document.getElementById("answer-thread-like-count");
-    const commentCountEl = document.getElementById(
-        "answer-thread-comment-count"
-    );
 
     if (likeCountEl && answerData.likeCount != null) {
         likeCountEl.textContent = answerData.likeCount;
-    }
-    if (commentCountEl && answerData.commentCount != null) {
-        commentCountEl.textContent = answerData.commentCount;
     }
 }
 

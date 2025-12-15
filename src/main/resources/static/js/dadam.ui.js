@@ -110,6 +110,20 @@ function formatKoreanDate(dateStr) {
     return `${y}년 ${m}월 ${d}일`;
 }
 
+function getEventTypeMeta(type) {
+    const raw = type || "";
+    const lower = raw.toLowerCase();
+
+    if (lower.includes("여행")) {
+        return { emoji: "✈️", label: raw || "여행", className: "is-trip" };
+    }
+    if (lower.includes("식")) {
+        return { emoji: "🍽️", label: raw || "식사", className: "is-dinner" };
+    }
+
+    return { emoji: "📌", label: raw || "기타", className: "is-etc" };
+}
+
 /* -----------------------------------------------------
    서버 일정 관련 헬퍼
 ----------------------------------------------------- */
@@ -434,14 +448,29 @@ async function openDayEventsModal(dateKey) {
         dayEventsListEl.innerHTML = schedules
             .map((s) => {
                 const ev = mapScheduleToEvent(s);
-                const timeLabel = ev.time ? ` · ${ev.time}` : "";
-                const placeLabel = ev.place ? ` · ${ev.place}` : "";
+                const { emoji, label: typeLabel, className: typeClass } =
+                    getEventTypeMeta(ev.type);
+                const timeChip = ev.time
+                    ? `<span class="day-event-chip">⏰ ${ev.time}</span>`
+                    : "";
+                const placeChip = ev.place
+                    ? `<span class="day-event-chip">📍 ${ev.place}</span>`
+                    : "";
                 return `
           <button type="button"
                   class="day-event-item"
                   data-schedule-id="${ev.id}">
-            <span class="day-event-title">${ev.title}</span>
-            <span class="day-event-meta">${formatKoreanDate(ev.date)}${timeLabel}${placeLabel}</span>
+            <div class="day-event-top">
+              <span class="day-event-type ${typeClass}">${emoji} ${typeLabel}</span>
+              <span class="day-event-date">📅 ${formatKoreanDate(ev.date)}</span>
+            </div>
+            <div class="day-event-body">
+              <span class="day-event-title">${ev.title}</span>
+              <div class="day-event-meta">
+                ${timeChip}
+                ${placeChip}
+              </div>
+            </div>
           </button>
         `;
             })
