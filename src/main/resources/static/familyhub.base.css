@@ -1,7 +1,7 @@
 /* =========================================
    familyhub.base.css
    - Reset + 폰트 + 컬러 토큰 + 기본 타이포/유틸
-   (따뜻한 베이지 + 말차톤 테마)
+   - 차(茶) 콘셉트의 따뜻한 크림 & 세이지 그린 통합 테마
 ========================================= */
 
 /* ---------- Font ---------- */
@@ -81,35 +81,38 @@ ol {
 /* ---------- Design Tokens ---------- */
 
 :root {
-    /* Primary palette (말차 그린) */
-    --fh-color-primary: #5b8c5a;              /* 진한 말차색 */
-    --fh-color-primary-soft: #f2f6ec;         /* 연한 말차 우유 */
-    --fh-color-primary-soft-strong: #e0edd4;  /* 살짝 더 진한 말차 */
+    /* Primary palette (세이지 그린) */
+    --fh-color-primary: #4c8b6a;
+    --fh-color-primary-soft: #e7f3ec;
+    --fh-color-primary-soft-strong: #dceade;
+    --fh-color-primary-glow: rgba(76, 139, 106, 0.18);
 
-    /* Accent (따뜻한 살구/코랄) */
-    --fh-color-accent: #f49b5a;
-    --fh-color-accent-soft: #fff3e5;
+    /* Accent (꿀·홍차 포인트) */
+    --fh-color-accent: #d08a2f;
+    --fh-color-accent-soft: #fff3e0;
+    --fh-color-accent-strong: rgba(208, 138, 47, 0.25);
 
-    /* Neutral (따뜻한 베이지 계열 배경) */
-    --fh-color-bg: #faf4ea;                  /* 전체 배경: 크림 베이지 */
-    --fh-color-bg-elevated: #fffdf7;         /* 카드 배경: 살짝 더 밝음 */
-    --fh-color-border-subtle: rgba(63, 52, 37, 0.08);
-    --fh-color-border-strong: rgba(63, 52, 37, 0.16);
-    --fh-color-text-main: #3f3425;           /* 진한 브라운톤 텍스트 */
-    --fh-color-text-soft: #7b6b55;
-    --fh-color-text-softer: #a89880;
+    /* Neutral (우유 거품 같은 크림 백그라운드) */
+    --fh-color-bg: #f7f3eb;
+    --fh-color-bg-elevated: #ffffff;
+    --fh-color-border-subtle: rgba(52, 42, 30, 0.08);
+    --fh-color-border-strong: rgba(52, 42, 30, 0.16);
+    --fh-color-text-main: #2f261c;
+    --fh-color-text-soft: #5b4f42;
+    --fh-color-text-softer: #978a7a;
 
     /* System */
-    --fh-color-success: #3ba471;
-    --fh-color-success-soft: #e6f6ee;
-    --fh-color-danger: #e45757;
-    --fh-color-danger-soft: #fdecec;
-    --fh-color-warning: #f4a72f;
-    --fh-color-warning-soft: #fff6e4;
+    --fh-color-success: #4c8b6a;
+    --fh-color-success-soft: #e6f4ec;
+    --fh-color-danger: #d65f5f;
+    --fh-color-danger-soft: #ffecec;
+    --fh-color-warning: #d08a2f;
+    --fh-color-warning-soft: #fff6e7;
 
-    /* Shadow (조금 더 부드러운 그림자) */
-    --fh-shadow-soft: 0 12px 35px rgba(63, 52, 37, 0.06);
-    --fh-shadow-medium: 0 20px 60px rgba(63, 52, 37, 0.1);
+    /* Shadow */
+    --fh-shadow-soft: 0 12px 35px rgba(56, 42, 30, 0.06);
+    --fh-shadow-medium: 0 20px 60px rgba(56, 42, 30, 0.1);
+    --fh-shadow-strong: 0 30px 80px rgba(56, 42, 30, 0.14);
 
     /* Radius */
     --fh-radius-xs: 6px;
@@ -136,17 +139,44 @@ body.theme-dark {
     min-height: 100vh;
     background:
             radial-gradient(
-                    circle at top left,
-                    rgba(91, 140, 90, 0.2),
-                    transparent 55%
+                    circle at 18% 20%,
+                    rgba(76, 139, 106, 0.12),
+                    transparent 38%
             ),
             radial-gradient(
-                    circle at bottom right,
-                    rgba(244, 155, 90, 0.25),
-                    transparent 55%
+                    circle at 86% 18%,
+                    rgba(208, 138, 47, 0.12),
+                    transparent 42%
             ),
-            var(--fh-color-bg);
+            radial-gradient(
+                    circle at 12% 78%,
+                    rgba(118, 94, 66, 0.08),
+                    transparent 40%
+            ),
+            linear-gradient(180deg, #fbf8f2 0%, #f6f1e8 70%, #f2ecdf 100%);
     color: var(--fh-color-text-main);
+}
+
+/* 부드러운 그리드/빛무리 배경 */
+.fh-body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+            radial-gradient(240px 240px at 25% 25%, rgba(76, 139, 106, 0.12), transparent 60%),
+            radial-gradient(320px 280px at 78% 12%, rgba(208, 138, 47, 0.12), transparent 60%),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.07) 100%);
+    opacity: 0.94;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.fh-body .app,
+.fh-body header,
+.fh-body main,
+.fh-body .modal-backdrop {
+    position: relative;
+    z-index: 1;
 }
 
 /* 앱 전체 래퍼는 layout.css에서 .app 정의 */
@@ -160,6 +190,24 @@ h4 {
     font-weight: 600;
     letter-spacing: -0.02em;
     color: var(--fh-color-text-main);
+}
+
+/* 포커스 상태를 더 명확하게 */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid rgba(85, 102, 255, 0.28);
+    outline-offset: 1px;
+}
+
+/* 스크롤바 커스텀: 부드러운 베이지 톤 */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #f6efe3; }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #b9caa7 0%, #8da47c 100%);
+    border-radius: 999px;
+    border: 2px solid #f6efe3;
 }
 
 p {

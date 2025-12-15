@@ -1,7 +1,7 @@
 /* =========================================
    base.css
    - Reset + 폰트 + 컬러 토큰 + 기본 타이포/유틸
-   화이트 베이스 + 말차 포인트
+   - 차(茶) 무드의 크림 & 세이지 포인트 테마
 ========================================= */
 
 /* ---------- Font ---------- */
@@ -82,42 +82,42 @@ ol {
 /* ---------- Design Tokens ---------- */
 
 :root {
-    /* Primary (말차 그린) */
-    --fh-color-primary: #5f8f65;
-    --fh-color-primary-soft: #e6f2ea;
-    --fh-color-primary-soft-strong: #d3e6d8;
+    /* Primary (세이지 그린) */
+    --fh-color-primary: #4c8b6a;
+    --fh-color-primary-soft: #e7f3ec;
+    --fh-color-primary-soft-strong: #dceade;
 
-    /* Accent (살짝만 사용) */
-    --fh-color-accent: #f4a15a;
-    --fh-color-accent-soft: #fff3e5;
+    /* Accent (꿀빛) */
+    --fh-color-accent: #d08a2f;
+    --fh-color-accent-soft: #fff3e0;
 
     /* Neutral */
-    --fh-color-bg: #f4f5f7;
+    --fh-color-bg: #f7f3eb;
     --fh-color-bg-elevated: #ffffff;
-    --fh-color-border-subtle: rgba(15, 23, 42, 0.06);
-    --fh-color-border-strong: rgba(15, 23, 42, 0.16);
-    --fh-color-text-main: #111827;
-    --fh-color-text-soft: #6b7280;
-    --fh-color-text-softer: #9ca3af;
+    --fh-color-border-subtle: rgba(52, 42, 30, 0.08);
+    --fh-color-border-strong: rgba(52, 42, 30, 0.16);
+    --fh-color-text-main: #2f261c;
+    --fh-color-text-soft: #5b4f42;
+    --fh-color-text-softer: #978a7a;
 
     /* System */
-    --fh-color-success: #22c55e;
-    --fh-color-success-soft: #ecfdf3;
-    --fh-color-danger: #ef4444;
-    --fh-color-danger-soft: #fef2f2;
-    --fh-color-warning: #f59e0b;
-    --fh-color-warning-soft: #fffbeb;
+    --fh-color-success: #4c8b6a;
+    --fh-color-success-soft: #e6f4ec;
+    --fh-color-danger: #d65f5f;
+    --fh-color-danger-soft: #ffecec;
+    --fh-color-warning: #d08a2f;
+    --fh-color-warning-soft: #fff6e7;
 
-    /* Shadow (조금 더 현실적인 강도) */
-    --fh-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
-    --fh-shadow-medium: 0 18px 45px rgba(15, 23, 42, 0.12);
+    /* Shadow */
+    --fh-shadow-soft: 0 8px 24px rgba(52, 42, 30, 0.07);
+    --fh-shadow-medium: 0 18px 45px rgba(52, 42, 30, 0.12);
 
     /* Radius */
     --fh-radius-xs: 6px;
-    --fh-radius-sm: 8px;
-    --fh-radius-md: 10px;
-    --fh-radius-lg: 14px;
-    --fh-radius-xl: 18px;
+    --fh-radius-sm: 10px;
+    --fh-radius-md: 14px;
+    --fh-radius-lg: 18px;
+    --fh-radius-xl: 22px;
     --fh-radius-pill: 999px;
 
     /* Layout */
@@ -132,14 +132,19 @@ ol {
     min-height: 100vh;
     background:
             radial-gradient(
-                    circle at top left,
-                    rgba(95, 143, 101, 0.12),
+                    circle at 18% 18%,
+                    rgba(76, 139, 106, 0.12),
                     transparent 55%
             ),
             radial-gradient(
-                    circle at bottom right,
-                    rgba(148, 210, 164, 0.16),
+                    circle at 82% 10%,
+                    rgba(208, 138, 47, 0.14),
                     transparent 55%
+            ),
+            radial-gradient(
+                    circle at 14% 78%,
+                    rgba(118, 94, 66, 0.08),
+                    transparent 50%
             ),
             var(--fh-color-bg);
     color: var(--fh-color-text-main);
