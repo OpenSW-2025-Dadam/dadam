@@ -5,7 +5,7 @@
 ===================================================== */
 
 const FAMILY_MEMBERS_API_URL = "/api/v1/users/family";
-const FAMILY_MAX_MEMBERS = 10;
+const FAMILY_MAX_MEMBERS = 50;
 let latestFamilyMembers = [];
 const familyGridEl = document.getElementById("family-grid");
 const inviteCodeInput = document.getElementById("invite-code-value");

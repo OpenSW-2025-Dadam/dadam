@@ -339,7 +339,7 @@ function renderEventList() {
         return a.date.localeCompare(b.date);
     });
 
-    const limited = sorted.slice(0, 5);
+    const limited = sorted.slice(0, 3);
 
     eventListEl.innerHTML = limited
         .map((ev) => {

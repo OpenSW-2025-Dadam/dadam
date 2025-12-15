@@ -299,33 +299,34 @@ main, header, section, aside {
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 12px;
+    gap: 14px;
 }
 
 .answer-item {
-    padding: 14px;
-    border-radius: 14px;
-    border: 1px solid rgba(139, 92, 59, 0.18);
-    background: linear-gradient(135deg, rgba(139, 92, 59, 0.04), rgba(255, 255, 255, 0.96));
-    box-shadow: 0 10px 30px rgba(52, 39, 28, 0.08);
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 59, 0.16);
+    background: linear-gradient(135deg, rgba(139, 92, 59, 0.06), rgba(255, 255, 255, 0.98));
+    box-shadow: 0 14px 32px rgba(52, 39, 28, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     display: flex;
     align-items: stretch;
-    gap: 12px;
+    gap: 14px;
     cursor: pointer;
 }
 
 .answer-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 32px rgba(52, 39, 28, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px rgba(52, 39, 28, 0.14);
     border-color: rgba(139, 92, 59, 0.32);
+    background: linear-gradient(135deg, rgba(139, 92, 59, 0.08), rgba(255, 255, 255, 1));
 }
 
 .answer-item .answer-main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     align-items: flex-start;
     text-align: left;
 }
@@ -339,31 +340,66 @@ main, header, section, aside {
 .answer-user-text { display: flex; flex-direction: column; gap: 4px; }
 .answer-name { font-weight: 800; color: var(--text); }
 .answer-time { color: var(--text-soft); font-size: 12px; }
-.answer-preview { margin: 4px 0 0; font-size: 15px; line-height: 1.6; color: var(--text); }
+.answer-preview {
+    margin: 4px 0 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(139, 92, 59, 0.12);
+}
+
+.answer-preview-text { display: inline; }
+.answer-quote { color: var(--accent-strong); font-weight: 800; }
 
 .answer-meta {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin-left: auto;
 }
 
 .meta-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(139, 92, 59, 0.12);
-    background: rgba(139, 92, 59, 0.06);
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 59, 0.16);
+    background: #fff;
     color: var(--text);
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.16s ease, border-color 0.16s ease;
+    box-shadow: 0 8px 20px rgba(52, 39, 28, 0.08);
+    transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
-.meta-btn:hover { background: rgba(139, 92, 59, 0.12); border-color: rgba(139, 92, 59, 0.2); }
-.meta-count { font-size: 13px; }
+.meta-btn:hover {
+    background: rgba(139, 92, 59, 0.06);
+    border-color: rgba(139, 92, 59, 0.26);
+    transform: translateY(-1px);
+}
+
+.meta-label {
+    font-size: 12px;
+    color: var(--text-soft);
+    letter-spacing: -0.01em;
+}
+
+.meta-count {
+    font-size: 13px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    background: rgba(139, 92, 59, 0.12);
+    color: var(--accent-strong);
+    min-width: 32px;
+    text-align: center;
+}
 
 .answer-thread-card {
     border: 1px solid rgba(139, 92, 59, 0.18);

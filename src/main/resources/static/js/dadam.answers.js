@@ -317,7 +317,7 @@ function renderAnswerListFromData(answers) {
 
             return `
         <li class="answer-item" data-answer-id="${a.id}">
-          <button class="answer-main" type="button">
+          <button class="answer-main" type="button" aria-label="${escapeHtml(displayName)}님의 답변 보기">
             <div class="answer-user">
               <span class="avatar avatar-sm avatar-soft">
                 <span class="avatar-initial">${avatarLabel}</span>
@@ -328,16 +328,20 @@ function renderAnswerListFromData(answers) {
               </div>
             </div>
             <p class="answer-preview">
-              ${escapeHtml(preview)}
+              <span class="answer-quote">“</span>
+              <span class="answer-preview-text">${escapeHtml(preview)}</span>
+              <span class="answer-quote">”</span>
             </p>
           </button>
           <div class="answer-meta">
-            <button class="meta-btn like-btn" type="button">
+            <button class="meta-btn like-btn" type="button" aria-label="좋아요">
               <span class="fh-icon-heart"></span>
+              <span class="meta-label">좋아요</span>
               <span class="meta-count">${likeCount}</span>
             </button>
-            <button class="meta-btn comment-btn" type="button">
+            <button class="meta-btn comment-btn" type="button" aria-label="댓글">
               <span class="fh-icon-comment"></span>
+              <span class="meta-label">댓글</span>
               <span class="meta-count">${commentCount}</span>
             </button>
           </div>
@@ -446,9 +450,12 @@ async function handleAnswerSubmit(e) {
         updateAnswerLengthHint();
         await refreshAnswerList();
 
+        const notifierName = (currentUser?.name || "").trim();
+        const notifierLabel = notifierName ? `${notifierName}님이` : "누군가";
+
         addNotification?.({
             type: "info",
-            message: "오늘의 질문에 답변을 남겼어요.",
+            message: `${notifierLabel} 오늘의 질문에 답변을 남겼어요.`,
         });
     } catch (err) {
         console.error("[ANSWERS] submit error:", err);
