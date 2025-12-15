@@ -106,7 +106,7 @@
                                 value=""
                                 placeholder="로그인 후 코드를 발급받아 주세요"
                         />
-                        <button class="btn btn-primary" type="button" id="copy-invite-code">복사</button>
+                        <button class="btn btn-primary invite-copy-btn" type="button" id="copy-invite-code">복사</button>
                     </div>
                     <p class="helper-text">가족 구성원들과 동일한 가족 코드를 사용해 주세요.</p>
                 </div>
@@ -528,14 +528,22 @@
                 </button>
             </header>
             <div class="modal-body">
-                <div id="answer-thread-main"></div>
-                <div class="answer-thread-actions" id="answer-thread-actions"
-                     style="margin-top:12px; gap:8px; display:flex; justify-content:flex-end;">
-                    <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-btn">수정</button>
-                    <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-cancel-btn" style="display:none;">수정 취소</button>
-                    <button class="btn btn-danger btn-sm" type="button" id="answer-delete-btn">삭제</button>
+                <div class="answer-thread-card">
+                    <div id="answer-thread-main" class="answer-thread-main"></div>
+                    <div class="answer-thread-actions" id="answer-thread-actions">
+                        <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-btn">수정</button>
+                        <button class="btn btn-ghost btn-sm" type="button" id="answer-edit-cancel-btn" style="display:none;">수정 취소</button>
+                        <button class="btn btn-danger btn-sm" type="button" id="answer-delete-btn">삭제</button>
+                    </div>
                 </div>
-                <hr />
+
+                <div class="comment-section-heading">
+                    <div>
+                        <p class="modal-eyebrow">댓글</p>
+                        <h3 class="comment-section-title">가족의 한마디</h3>
+                    </div>
+                </div>
+
                 <ul class="comment-list" id="comment-list"></ul>
 
                 <form id="comment-form" class="comment-form">
